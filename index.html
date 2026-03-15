@@ -1,0 +1,1328 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Die Sechs Säulen</title>
+<style>
+  :root {
+    --bg: #000000;
+    --card: #1C1C1E;
+    --card2: #2C2C2E;
+    --card3: #3A3A3C;
+    --border: rgba(255,255,255,0.08);
+    --border2: rgba(255,255,255,0.14);
+    --text: #FFFFFF;
+    --text2: rgba(255,255,255,0.6);
+    --text3: rgba(255,255,255,0.35);
+    --accent: #30D158;
+    --accent2: rgba(48,209,88,0.18);
+    --accent-rgb: 48,209,88;
+    --blue: #0A84FF;
+    --orange: #FF9F0A;
+    --radius: 18px;
+    --radius-sm: 12px;
+    --font: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', sans-serif;
+  }
+  .light-mode {
+    --bg: #F2F2F7;
+    --card: #FFFFFF;
+    --card2: #F2F2F7;
+    --card3: #E5E5EA;
+    --border: rgba(0,0,0,0.06);
+    --border2: rgba(0,0,0,0.12);
+    --text: #000000;
+    --text2: rgba(0,0,0,0.55);
+    --text3: rgba(0,0,0,0.30);
+    --accent2: var(--accent-12);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; background: var(--bg); color: var(--text); font-family: var(--font); overscroll-behavior: none; }
+  body { overflow: hidden; }
+  #app { height: 100%; display: flex; flex-direction: column; max-width: 430px; margin: 0 auto; position: relative; }
+  .screen { display: none; flex: 1; flex-direction: column; overflow: hidden; }
+  .screen.active { display: flex; }
+  .scrollable { overflow-y: auto; -webkit-overflow-scrolling: touch; padding-bottom: 32px; }
+  .scrollable::-webkit-scrollbar { display: none; }
+
+  /* NAV BAR */
+  .nav-bar {
+    display: flex; align-items: center; justify-content: space-around;
+    background: rgba(28,28,30,0.92); backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-top: 1px solid var(--border); padding: 8px 0 20px;
+    padding-bottom: max(20px, env(safe-area-inset-bottom));
+    flex-shrink: 0; z-index: 100;
+  }
+  .light-mode .nav-bar { background: rgba(242,242,247,0.92); }
+  .nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer; padding: 4px 16px; border-radius: 10px; transition: opacity 0.15s; flex: 1; }
+  .nav-item:active { opacity: 0.6; }
+  .nav-icon { font-size: 22px; line-height: 1; transition: color 0.2s; }
+  .nav-label { font-size: 10px; font-weight: 500; color: var(--text3); transition: color 0.2s; }
+  .nav-item.active .nav-icon, .nav-item.active .nav-label { color: var(--accent); }
+
+  /* TOP BAR */
+  .top-bar { display: flex; align-items: center; justify-content: space-between; padding: 12px 20px 8px; padding-top: max(12px, env(safe-area-inset-top)); flex-shrink: 0; }
+  .top-bar-title { font-size: 28px; font-weight: 700; letter-spacing: -0.5px; }
+  .top-bar-sub { font-size: 14px; color: var(--text2); }
+  .icon-btn { width: 36px; height: 36px; border-radius: 50%; background: var(--card2); border: none; color: var(--text); font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: opacity 0.15s; }
+  .icon-btn:active { opacity: 0.6; }
+
+  /* CARDS */
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; margin: 0 16px 12px; }
+  .card-sm { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 14px; }
+  .card-hero { background: linear-gradient(135deg, var(--accent2) 0%, var(--accent-07) 100%); border: 1px solid var(--accent-25); border-radius: var(--radius); padding: 20px; margin: 0 16px 12px; }
+  .card-hero-blue { background: linear-gradient(135deg, #0D1C2F 0%, #060F1F 100%); border: 1px solid rgba(10,132,255,0.25); }
+
+  /* ACCENT PICKER MODAL */
+  #accent-modal { position: fixed; inset: 0; z-index: 9000; display: none; align-items: flex-end; justify-content: center; background: rgba(0,0,0,0.5); }
+  #accent-modal.open { display: flex; }
+  #accent-sheet { background: var(--card); border-radius: 24px 24px 0 0; padding: 24px 20px 40px; width: 100%; max-width: 430px; }
+  .accent-title { font-size: 17px; font-weight: 700; margin-bottom: 20px; text-align: center; }
+  .accent-swatches { display: flex; gap: 16px; justify-content: center; margin-bottom: 24px; }
+  .swatch { width: 48px; height: 48px; border-radius: 50%; cursor: pointer; border: 3px solid transparent; transition: transform 0.15s; position: relative; }
+  .swatch:active { transform: scale(0.9); }
+  .swatch.selected { border-color: var(--text); }
+  .swatch.selected::after { content: '✓'; position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 800; color: #000; }
+  .swatch.selected.light-swatch::after { color: #fff; }
+  #accent-close { width: 100%; background: var(--card2); border: none; color: var(--text); font-size: 16px; font-weight: 600; padding: 14px; border-radius: 14px; cursor: pointer; }
+  #accent-close:active { opacity: 0.7; }
+
+  /* BADGES */
+  .badge { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 20px; }
+  .badge-green { background: var(--accent); color: #000; font-weight: 700; }
+  .badge-gray { background: var(--card3); color: var(--text2); }
+  .badge-blue { background: rgba(10,132,255,0.15); color: var(--blue); }
+  .badge-orange { background: rgba(255,159,10,0.15); color: var(--orange); }
+
+  /* PROGRESS DOTS */
+  .dots { display: flex; gap: 6px; align-items: center; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--card3); transition: all 0.3s; }
+  .dot.done { background: var(--accent); }
+  .dot.active { background: var(--accent); opacity: 0.5; box-shadow: 0 0 0 3px var(--accent-20); }
+
+  /* WEEK LIST ITEM */
+  .week-item { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-bottom: 1px solid var(--border); cursor: pointer; transition: background 0.15s; }
+  .week-item:active { background: var(--card2); }
+  .week-item:last-child { border-bottom: none; }
+  .week-item.current-week { background: var(--accent2); border-left: 3px solid var(--accent); }
+  .week-num { width: 36px; height: 36px; border-radius: 10px; background: var(--card2); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; color: var(--text2); flex-shrink: 0; }
+  .week-num.done { background: var(--accent); color: #000; }
+  .week-info { flex: 1; min-width: 0; }
+  .week-name { font-size: 15px; font-weight: 600; }
+  .week-sub { font-size: 12px; color: var(--text3); margin-top: 2px; }
+  .week-arrow { color: var(--text3); font-size: 14px; }
+
+  /* TABS */
+  .tab-row { display: flex; gap: 6px; padding: 0 16px 12px; overflow-x: auto; flex-shrink: 0; }
+  .tab-row::-webkit-scrollbar { display: none; }
+  .tab { padding: 7px 14px; border-radius: 20px; font-size: 13px; font-weight: 600; background: var(--card); border: 1px solid var(--border); color: var(--text2); cursor: pointer; transition: all 0.2s; white-space: nowrap; flex-shrink: 0; }
+  .tab.active { background: var(--accent); color: #000; border-color: var(--accent); }
+  .tab.done-tab { border-color: var(--accent); color: var(--accent); }
+
+  /* ENTRY LIST */
+  .entry-item { display: flex; align-items: flex-start; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+  .entry-item:last-child { border-bottom: none; }
+  .entry-text { flex: 1; font-size: 15px; line-height: 1.5; }
+  .entry-del { background: none; border: none; color: var(--text3); font-size: 18px; cursor: pointer; padding: 0 4px; line-height: 1; flex-shrink: 0; transition: color 0.15s; }
+  .entry-del:active { color: #FF453A; }
+
+  /* INPUT */
+  .input-bar { display: flex; gap: 10px; padding: 12px 16px; background: var(--card); border-top: 1px solid var(--border); flex-shrink: 0; padding-bottom: max(12px, env(safe-area-inset-bottom)); }
+  .stem-input { flex: 1; background: var(--card2); border: 1px solid var(--border); border-radius: 12px; padding: 10px 14px; font-size: 15px; color: var(--text); font-family: var(--font); outline: none; transition: border-color 0.2s; resize: none; height: 42px; overflow: hidden; line-height: 1.4; }
+  .stem-input:focus { border-color: var(--accent); }
+  .stem-input::placeholder { color: var(--text3); }
+  .send-btn { width: 42px; height: 42px; border-radius: 50%; background: var(--accent); border: none; color: #000; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: opacity 0.15s; }
+  .send-btn:active { opacity: 0.7; }
+  .send-btn:disabled { background: var(--card3); color: var(--text3); cursor: default; }
+
+  /* STATS ROW */
+  .stats-row { display: flex; gap: 10px; padding: 0 16px 12px; }
+  .stat-card { flex: 1; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px; text-align: center; }
+  .stat-num { font-size: 24px; font-weight: 700; color: var(--accent); }
+  .stat-label { font-size: 11px; color: var(--text3); margin-top: 2px; font-weight: 500; }
+
+  /* STEM CARD in focus */
+  .stem-card { background: var(--card2); border-radius: var(--radius-sm); padding: 12px 14px; margin: 0 16px 10px; border: 1px solid var(--border); }
+  .stem-card.active-stem { border-color: var(--accent); background: var(--accent2); }
+  .stem-title { font-size: 13px; font-weight: 600; color: var(--text2); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .stem-text { font-size: 17px; font-weight: 600; line-height: 1.4; }
+  .stem-count { font-size: 12px; color: var(--text3); margin-top: 4px; }
+  .stem-count.ready { color: var(--accent); }
+
+  /* BACK BTN */
+  .back-btn { background: none; border: none; color: var(--blue); font-size: 15px; font-weight: 400; cursor: pointer; display: flex; align-items: center; gap: 4px; padding: 0; }
+  .back-btn:active { opacity: 0.6; }
+
+  /* SECTION TITLE */
+  .section-title { font-size: 13px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.8px; padding: 0 20px; margin-bottom: 8px; }
+
+  /* GUIDE */
+  .pillar-item { display: flex; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--border); align-items: flex-start; }
+  .pillar-item:last-child { border-bottom: none; }
+  .pillar-num { width: 28px; height: 28px; border-radius: 8px; background: var(--accent2); color: var(--accent); font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .pillar-info { flex: 1; }
+  .pillar-name { font-size: 15px; font-weight: 600; }
+  .pillar-weeks { font-size: 12px; color: var(--text3); margin-top: 2px; }
+
+  /* REFLECTION HEADER */
+  .reflection-header { background: linear-gradient(135deg, #1F1A00 0%, #0F0D00 100%); border: 1px solid rgba(255,159,10,0.25); border-radius: var(--radius); padding: 16px 20px; margin: 0 16px 12px; }
+
+  /* TOAST */
+  #toast { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--card2); border: 1px solid var(--border2); border-radius: 20px; padding: 10px 20px; font-size: 14px; font-weight: 600; color: var(--text); opacity: 0; transition: all 0.3s; z-index: 9999; pointer-events: none; white-space: nowrap; }
+  #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* ANIMATIONS */
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  .fade-in { animation: fadeIn 0.25s ease forwards; }
+
+  /* DIVIDER */
+  .divider { height: 1px; background: var(--border); margin: 8px 0; }
+
+  /* EMPTY STATE */
+  .empty-state { text-align: center; padding: 40px 20px; color: var(--text3); }
+  .empty-icon { font-size: 40px; margin-bottom: 12px; }
+  .empty-text { font-size: 15px; line-height: 1.5; }
+
+  /* PROGRESS BAR */
+  .progress-bar { height: 4px; background: var(--card3); border-radius: 2px; overflow: hidden; margin-top: 8px; }
+  .progress-fill { height: 100%; background: var(--accent); border-radius: 2px; transition: width 0.4s ease; }
+
+  /* LOCKED */
+  .locked { opacity: 0.35; pointer-events: none; }
+
+  /* CHECKBOX */
+  .check-circle { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--card3); display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 12px; }
+  .check-circle.done { background: var(--accent); border-color: var(--accent); color: #000; }
+</style>
+</head>
+<body>
+<div id="app">
+  <!-- HOME -->
+  <div class="screen active" id="screen-home">
+    <div class="top-bar">
+      <div>
+        <div class="top-bar-title">Die Sechs Säulen</div>
+        <div class="top-bar-sub">Selbstwert-Programm</div>
+      </div>
+      <button class="icon-btn" id="theme-toggle" title="Modus wechseln">&#9788;</button>
+    </div>
+    <div class="scrollable flex-1" id="home-scroll">
+      <!-- content injected by JS -->
+    </div>
+  </div>
+
+  <!-- WEEK LIST -->
+  <div class="screen" id="screen-weeks">
+    <div class="top-bar">
+      <div class="top-bar-title">31 Wochen</div>
+      <button class="icon-btn" id="theme-toggle2">&#9788;</button>
+    </div>
+    <div class="scrollable flex-1" id="weeks-scroll"></div>
+  </div>
+
+  <!-- WEEK DETAIL -->
+  <div class="screen" id="screen-detail">
+    <div class="top-bar">
+      <button class="back-btn" id="detail-back">&#8249; Wochen</button>
+      <button class="icon-btn" id="theme-toggle3">&#9788;</button>
+    </div>
+    <div class="scrollable flex-1" id="detail-scroll"></div>
+  </div>
+
+  <!-- FOCUS -->
+  <div class="screen" id="screen-focus">
+    <div class="top-bar" style="padding-bottom:4px;">
+      <button class="back-btn" id="focus-back">&#8249; Zurück</button>
+      <div id="focus-header-right" style="font-size:13px;color:var(--text3);"></div>
+    </div>
+    <div id="focus-stem-info" style="padding:0 16px 8px;flex-shrink:0;"></div>
+    <div class="tab-row" id="focus-day-tabs"></div>
+    <div class="tab-row" id="focus-stem-tabs" style="padding-top:0;"></div>
+    <div class="scrollable flex-1" id="focus-entries"></div>
+    <div class="input-bar">
+      <textarea class="stem-input" id="focus-input" placeholder="Vervollständige den Satz …" rows="1"></textarea>
+      <button class="send-btn" id="focus-send">&#9650;</button>
+    </div>
+  </div>
+
+  <!-- WEEKEND REFLECTION -->
+  <div class="screen" id="screen-reflect">
+    <div class="top-bar" style="padding-bottom:4px;">
+      <button class="back-btn" id="reflect-back">&#8249; Zurück</button>
+      <div style="font-size:13px;color:var(--text3);" id="reflect-week-label"></div>
+    </div>
+    <div class="reflection-header" style="margin-top:8px;">
+      <div style="font-size:11px;font-weight:700;color:var(--orange);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:6px;">Wochenreflexion</div>
+      <div style="font-size:17px;font-weight:700;line-height:1.4;" id="reflect-stem-text"></div>
+      <div style="font-size:12px;color:var(--text3);margin-top:8px;" id="reflect-count"></div>
+    </div>
+    <div class="scrollable flex-1" id="reflect-entries"></div>
+    <div class="input-bar">
+      <textarea class="stem-input" id="reflect-input" placeholder="Gedanke …" rows="1"></textarea>
+      <button class="send-btn" id="reflect-send">&#9650;</button>
+    </div>
+  </div>
+
+  <!-- GUIDE -->
+  <div class="screen" id="screen-guide">
+    <div class="top-bar">
+      <div class="top-bar-title">Guide</div>
+      <button class="icon-btn" id="theme-toggle4">&#9788;</button>
+    </div>
+    <div class="scrollable flex-1" id="guide-scroll"></div>
+  </div>
+
+  <!-- NAV -->
+  <div class="nav-bar">
+    <div class="nav-item active" data-screen="home" onclick="navTo('home')">
+      <div class="nav-icon">&#9679;</div>
+      <div class="nav-label">Heute</div>
+    </div>
+    <div class="nav-item" data-screen="weeks" onclick="navTo('weeks')">
+      <div class="nav-icon">&#9776;</div>
+      <div class="nav-label">Wochen</div>
+    </div>
+    <div class="nav-item" data-screen="guide" onclick="navTo('guide')">
+      <div class="nav-icon">&#9432;</div>
+      <div class="nav-label">Guide</div>
+    </div>
+  </div>
+</div>
+
+<div id="accent-modal">
+  <div id="accent-sheet">
+    <div class="accent-title">Darstellung</div>
+    <div style="font-size:12px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.7px;margin-bottom:12px;text-align:center;">Akzentfarbe</div>
+    <div class="accent-swatches" id="accent-swatches"></div>
+    <div style="height:1px;background:var(--border);margin:16px 0;"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:4px 0;margin-bottom:16px;">
+      <span style="font-size:15px;font-weight:600;">Dunkler Modus</span>
+      <button id="dark-mode-toggle" style="background:none;border:none;cursor:pointer;padding:0;font-size:24px;">&#9680;</button>
+    </div>
+    <button id="accent-close">Fertig</button>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ==================== DATA ====================
+var WEEKS = [
+  {
+    theme: "Grundlagen",
+    stems: [
+      "Wenn ich meinem Leben heute mehr Bewusstsein bringe –",
+      "Wenn ich mehr Verantwortung für meine Entscheidungen und Handlungen übernehme –",
+      "Wenn ich mehr Aufmerksamkeit darauf lenke, wie ich mit anderen umgehe –",
+      "Wenn ich mein Energieniveau um 5 Prozent steigere –"
+    ]
+  },
+  {
+    theme: "Bewusstsein vertiefen",
+    stems: [
+      "Wenn ich meinen wichtigen Beziehungen 5 Prozent mehr Bewusstsein bringe –",
+      "Wenn ich meinen Unsicherheiten 5 Prozent mehr Bewusstsein bringe –",
+      "Wenn ich meinen tiefsten Bedürfnissen und Wünschen 5 Prozent mehr Bewusstsein bringe –",
+      "Wenn ich meinen Gefühlen 5 Prozent mehr Bewusstsein bringe –"
+    ]
+  },
+  {
+    theme: "Zuhören und Menschen",
+    stems: [
+      "Wenn ich Zuhören als kreative Handlung betrachte –",
+      "Wenn ich bemerke, wie Menschen auf die Qualität meines Zuhörens reagieren –",
+      "Wenn ich meinen Umgang mit Menschen heute bewusster gestalte –",
+      "Wenn ich mich verpflichte, fair und wohlwollend mit Menschen umzugehen –"
+    ]
+  },
+  {
+    theme: "Selbstwert aktivieren",
+    stems: [
+      "Wenn ich meinen Aktivitäten heute ein höheres Maß an Selbstwert entgegenbringe –",
+      "Wenn ich meinen Beziehungen heute ein höheres Maß an Selbstwert entgegenbringe –",
+      "Wenn ich heute 5 Prozent selbstakzeptierender bin –",
+      "Wenn ich mich selbst akzeptiere, auch wenn ich Fehler mache –",
+      "Wenn ich mich selbst akzeptiere, auch wenn ich mich verwirrt und überwältigt fühle –"
+    ]
+  },
+  {
+    theme: "Körper und Konflikte",
+    stems: [
+      "Wenn ich meinen Körper mehr akzeptiere –",
+      "Wenn ich meinen Körper verleugne und ablehne –",
+      "Wenn ich meine Konflikte verleugne oder ablehne –",
+      "Wenn ich alle Teile von mir mehr akzeptiere –"
+    ]
+  },
+  {
+    theme: "Gefühle und Gedanken",
+    stems: [
+      "Wenn ich meinen Selbstwert heute steigern wollte, könnte ich –",
+      "Wenn ich meine Gefühle mehr akzeptiere –",
+      "Wenn ich meine Gefühle verleugne und ablehne –",
+      "Wenn ich meine Gedanken mehr akzeptiere –",
+      "Wenn ich meine Gedanken verleugne und ablehne –"
+    ]
+  },
+  {
+    theme: "Angst und Schmerz",
+    stems: [
+      "Wenn ich meine Ängste mehr akzeptiere –",
+      "Wenn ich meine Ängste verleugne und ablehne –",
+      "Wenn ich meinen Schmerz mehr akzeptiere –",
+      "Wenn ich meinen Schmerz verleugne und ablehne –"
+    ]
+  },
+  {
+    theme: "Wut und Sexualität",
+    stems: [
+      "Wenn ich meine Wut mehr akzeptiere –",
+      "Wenn ich meine Wut verleugne und ablehne –",
+      "Wenn ich meine Sexualität mehr akzeptiere –",
+      "Wenn ich meine Sexualität verleugne und ablehne –"
+    ]
+  },
+  {
+    theme: "Aufregung und Intelligenz",
+    stems: [
+      "Wenn ich meine Aufregung mehr akzeptiere –",
+      "Wenn ich meine Aufregung verleugne und ablehne –",
+      "Wenn ich meine Intelligenz mehr akzeptiere –",
+      "Wenn ich meine Intelligenz verleugne und ablehne –"
+    ]
+  },
+  {
+    theme: "Freude und Integration",
+    stems: [
+      "Wenn ich meine Freude mehr akzeptiere –",
+      "Wenn ich meine Freude verleugne und ablehne –",
+      "Wenn ich allen Teilen von mir mehr Bewusstsein bringe –",
+      "Während ich lerne, alle Teile von mir zu akzeptieren –"
+    ]
+  },
+  {
+    theme: "Selbstverantwortung",
+    stems: [
+      "Selbstverantwortung bedeutet für mich –",
+      "Wenn ich 5 Prozent mehr Verantwortung für mein Leben und Wohlbefinden übernehme –",
+      "Wenn ich Verantwortung für mein Leben und Wohlbefinden vermeide –",
+      "Wenn ich 5 Prozent mehr Verantwortung für das Erreichen meiner Ziele übernehme –",
+      "Wenn ich Verantwortung für das Erreichen meiner Ziele vermeide –"
+    ]
+  },
+  {
+    theme: "Verantwortung Beziehungen",
+    stems: [
+      "Wenn ich 5 Prozent mehr Verantwortung für den Erfolg meiner Beziehungen übernehme –",
+      "Manchmal halte ich mich passiv, wenn ich –",
+      "Manchmal mache ich mich hilflos, wenn ich –",
+      "Mir wird bewusst –"
+    ]
+  },
+  {
+    theme: "Verantwortung Leben",
+    stems: [
+      "Wenn ich 5 Prozent mehr Verantwortung für meinen Lebensstandard übernehme –",
+      "Wenn ich 5 Prozent mehr Verantwortung für die Wahl meiner Weggefährten übernehme –",
+      "Wenn ich 5 Prozent mehr Verantwortung für mein persönliches Glück übernehme –",
+      "Wenn ich 5 Prozent mehr Verantwortung für das Niveau meines Selbstwerts übernehme –"
+    ]
+  },
+  {
+    theme: "Selbstbehauptung",
+    stems: [
+      "Selbstbehauptung bedeutet für mich –",
+      "Wenn ich heute 5 Prozent selbstbehauptender lebe –",
+      "Wenn ich meine Gedanken und Gefühle heute mit Respekt behandle –",
+      "Wenn ich meine Wünsche heute mit Respekt behandle –"
+    ]
+  },
+  {
+    theme: "Eigene Bedürfnisse",
+    stems: [
+      "Wenn mir (als ich jung war) jemand gesagt hätte, meine Wünsche zählen wirklich –",
+      "Wenn mir (als ich jung war) beigebracht worden wäre, mein eigenes Leben zu ehren –",
+      "Wenn ich mein Leben als unwichtig behandle –",
+      "Wenn ich bereit wäre, ja zu sagen wenn ich ja will, und nein wenn ich nein will –",
+      "Wenn ich bereit wäre, Menschen die Musik in mir hören zu lassen –",
+      "Wenn ich 5 Prozent mehr von dem ausdrücken würde, wer ich bin –"
+    ]
+  },
+  {
+    theme: "Zielgerichtet leben",
+    stems: [
+      "Zielgerichtet leben bedeutet für mich –",
+      "Wenn ich 5 Prozent mehr Zielgerichtetheit in mein Leben bringe –",
+      "Wenn ich bei der Arbeit 5 Prozent zielgerichteter handele –",
+      "Wenn ich in meinen Beziehungen 5 Prozent zielgerichteter handele –"
+    ]
+  },
+  {
+    theme: "Ziele und Glück",
+    stems: [
+      "Wenn ich mit meinen tiefsten Sehnsüchten 5 Prozent zielgerichteter umgehe –",
+      "Wenn ich mehr Verantwortung dafür übernehme, meine Wünsche zu erfüllen –",
+      "Wenn ich mein Glück zu einem bewussten Ziel mache –"
+    ]
+  },
+  {
+    theme: "Integrität",
+    stems: [
+      "Integrität bedeutet für mich –",
+      "Wenn ich mir Situationen anschaue, in denen mir volle Integrität schwer fällt –",
+      "Wenn ich 5 Prozent mehr Integrität in mein Leben bringe –",
+      "Wenn ich 5 Prozent mehr Integrität in meine Arbeit bringe –"
+    ]
+  },
+  {
+    theme: "Integrität Beziehungen",
+    stems: [
+      "Wenn ich 5 Prozent mehr Integrität in meine Beziehungen bringe –",
+      "Wenn ich den Werten treu bleibe, die ich für richtig halte –",
+      "Wenn ich mich weigere, nach Werten zu leben, die ich nicht respektiere –",
+      "Wenn ich meinen Selbstrespekt als hohe Priorität behandle –"
+    ]
+  },
+  {
+    theme: "Das innere Kind",
+    stems: [
+      "Wenn das Kind in mir sprechen könnte, würde es sagen –",
+      "Wenn der Teenager, der ich einmal war, noch in mir lebt –",
+      "Wenn mein jugendliches Ich sprechen könnte, würde es sagen –",
+      "Bei dem Gedanken, meinem kindlichen Ich zu helfen –",
+      "Bei dem Gedanken, meinem jugendlichen Ich zu helfen –",
+      "Wenn ich mit meinen jüngeren Anteilen Freundschaft schließen könnte –"
+    ]
+  },
+  {
+    theme: "Jüngere Anteile akzeptieren",
+    stems: [
+      "Wenn mein kindliches Ich sich von mir akzeptiert fühlte –",
+      "Wenn mein jugendliches Ich das Gefühl hätte, ich stehe auf seiner Seite –",
+      "Wenn meine jüngeren Anteile mein Mitgefühl für ihre Kämpfe spürten –",
+      "Wenn ich mein kindliches Ich in die Arme nehmen könnte –",
+      "Wenn ich meinen jugendlichen Anteil in die Arme nehmen könnte –",
+      "Wenn ich den Mut und das Mitgefühl hätte, meine jüngeren Anteile zu umarmen und zu lieben –"
+    ]
+  },
+  {
+    theme: "Ablehnung erkennen",
+    stems: [
+      "Manchmal fühlt sich mein kindliches Ich von mir abgelehnt, wenn ich –",
+      "Manchmal fühlt sich mein jugendlicher Anteil von mir abgelehnt, wenn ich –",
+      "Eines der Dinge, die mein kindliches Ich von mir braucht und selten bekommt, ist –",
+      "Eines der Dinge, die mein jugendlicher Anteil von mir braucht und nicht bekommen hat, ist –",
+      "Eine Art, wie sich mein kindliches Ich für meine Ablehnung rächt, ist –",
+      "Eine Art, wie sich mein jugendlicher Anteil für meine Ablehnung rächt, ist –"
+    ]
+  },
+  {
+    theme: "Verbindung herstellen",
+    stems: [
+      "Bei dem Gedanken, meinem kindlichen Ich zu geben, was es von mir braucht –",
+      "Bei dem Gedanken, meinem jugendlichen Anteil zu geben, was er von mir braucht –",
+      "Wenn mein kindliches Ich und ich uns ineinander verlieben würden –",
+      "Wenn mein jugendlicher Anteil und ich uns ineinander verlieben würden –"
+    ]
+  },
+  {
+    theme: "Vertrauen aufbauen",
+    stems: [
+      "Wenn ich akzeptiere, dass mein kindliches Ich Zeit brauchen kann, mir zu vertrauen –",
+      "Wenn ich akzeptiere, dass mein jugendlicher Anteil Zeit brauchen kann, mir zu vertrauen –",
+      "Während ich verstehe, dass mein kindlicher und jugendlicher Anteil beide Teil von mir sind –",
+      "Mir wird bewusst –"
+    ]
+  },
+  {
+    theme: "Schwierige Gefühle",
+    stems: [
+      "Manchmal, wenn ich Angst habe, –",
+      "Manchmal, wenn ich verletzt bin, –",
+      "Manchmal, wenn ich wütend bin, –",
+      "Eine wirksame Art, mit Angst umzugehen, könnte sein –",
+      "Eine wirksame Art, mit Verletzung umzugehen, könnte sein –",
+      "Eine wirksame Art, mit Wut umzugehen, könnte sein –"
+    ]
+  },
+  {
+    theme: "Positive Gefühle",
+    stems: [
+      "Manchmal, wenn ich aufgeregt bin, –",
+      "Manchmal, wenn ich sexuell erregt bin, –",
+      "Manchmal, wenn ich starke Gefühle erlebe, –",
+      "Wenn ich mit meiner Aufregung Freundschaft schließe –",
+      "Wenn ich mit meiner Sexualität Freundschaft schließe –",
+      "Während ich mit der ganzen Bandbreite meiner Emotionen vertrauter werde –"
+    ]
+  },
+  {
+    theme: "Sicherer Raum",
+    stems: [
+      "Wenn ich daran denke, ein besserer Freund für mein kindliches Ich zu werden –",
+      "Wenn ich daran denke, ein besserer Freund für meinen jugendlichen Anteil zu werden –",
+      "Während meine jüngeren Anteile sich bei mir wohler fühlen –",
+      "Während ich für mein kindliches Ich einen sicheren Raum schaffe –",
+      "Während ich für meinen jugendlichen Anteil einen sicheren Raum schaffe –"
+    ]
+  },
+  {
+    theme: "Elternstimmen",
+    stems: [
+      "Mutter gab mir ein Bild von mir als –",
+      "Vater gab mir ein Bild von mir als –",
+      "Mutter spricht durch meine Stimme, wenn ich mir sage –",
+      "Vater spricht durch meine Stimme, wenn ich mir sage –"
+    ]
+  },
+  {
+    theme: "Elternbeziehungen",
+    stems: [
+      "Wenn ich meiner Beziehung zu meiner Mutter 5 Prozent mehr Bewusstsein bringe –",
+      "Wenn ich meiner Beziehung zu meinem Vater 5 Prozent mehr Bewusstsein bringe –",
+      "Wenn ich meine Mutter und meinen Vater realistisch betrachte –",
+      "Wenn ich das Bewusstsein reflektiere, das ich in meine Beziehung zu meiner Mutter einbringe –",
+      "Wenn ich das Bewusstsein reflektiere, das ich in meine Beziehung zu meinem Vater einbringe –"
+    ]
+  },
+  {
+    theme: "Psychologische Freiheit",
+    stems: [
+      "Bei dem Gedanken, psychologisch frei von Mutter zu sein –",
+      "Bei dem Gedanken, psychologisch frei von Vater zu sein –",
+      "Bei dem Gedanken, mir selbst vollständig zu gehören –",
+      "Wenn mein Leben wirklich mir gehört –",
+      "Wenn ich wirklich fähig bin, selbstständig zu überleben –"
+    ]
+  },
+  {
+    theme: "Alle sechs Säulen",
+    stems: [
+      "Wenn ich 5 Prozent mehr Bewusstsein in mein Leben bringe –",
+      "Wenn ich 5 Prozent selbstakzeptierender bin –",
+      "Wenn ich 5 Prozent mehr Selbstverantwortung in mein Leben bringe –",
+      "Wenn ich 5 Prozent selbstbehauptender handele –",
+      "Wenn ich mein Leben 5 Prozent zielgerichteter lebe –",
+      "Wenn ich 5 Prozent mehr Integrität in mein Leben bringe –",
+      "Wenn ich tief atme und mir erlaube zu spüren, wie sich Selbstwert anfühlt –"
+    ]
+  }
+];
+
+var REFLECTION_STEM = "Wenn irgendetwas von dem, was ich diese Woche geschrieben habe, wahr ist, wäre es hilfreich, wenn ich –";
+
+var PILLARS = [
+  { name: "Bewusst leben", weeks: "Woche 1–4, 31" },
+  { name: "Selbstakzeptanz", weeks: "Woche 5–10, 31" },
+  { name: "Selbstverantwortung", weeks: "Woche 11–13, 31" },
+  { name: "Selbstbehauptung", weeks: "Woche 14–15, 31" },
+  { name: "Zielgerichtet leben", weeks: "Woche 16–17, 31" },
+  { name: "Integrität", weeks: "Woche 18–19, 31" }
+];
+
+// ==================== STATE ====================
+var state = {
+  currentWeek: 0,
+  currentDay: 0,
+  focusWeek: 0,
+  focusDay: 0,
+  focusStem: 0,
+  reflectWeek: 0,
+  darkMode: true,
+  accent: 'green'
+};
+
+var ACCENTS = [
+  { id: 'green',  label: 'Grün',   hex: '#30D158', rgb: '48,209,88',   light: false },
+  { id: 'white',  label: 'Weiß',   hex: '#FFFFFF', rgb: '255,255,255', light: true  },
+  { id: 'blue',   label: 'Blau',   hex: '#0A84FF', rgb: '10,132,255',  light: false },
+  { id: 'purple', label: 'Lila',   hex: '#BF5AF2', rgb: '191,90,242',  light: false },
+  { id: 'red',    label: 'Rot',    hex: '#FF453A', rgb: '255,69,58',   light: false },
+  { id: 'orange', label: 'Orange', hex: '#FF9F0A', rgb: '255,159,10',  light: false }
+];
+
+function getAccent() {
+  var a = state.accent || 'green';
+  for (var i = 0; i < ACCENTS.length; i++) { if (ACCENTS[i].id === a) return ACCENTS[i]; }
+  return ACCENTS[0];
+}
+
+function applyAccent() {
+  var a = getAccent();
+  var r = a.rgb;
+  document.documentElement.style.setProperty('--accent', a.hex);
+  document.documentElement.style.setProperty('--accent-rgb', r);
+  document.documentElement.style.setProperty('--accent2',  'rgba(' + r + ',0.18)');
+  document.documentElement.style.setProperty('--accent-25','rgba(' + r + ',0.25)');
+  document.documentElement.style.setProperty('--accent-20','rgba(' + r + ',0.20)');
+  document.documentElement.style.setProperty('--accent-15','rgba(' + r + ',0.15)');
+  document.documentElement.style.setProperty('--accent-12','rgba(' + r + ',0.12)');
+  document.documentElement.style.setProperty('--accent-07','rgba(' + r + ',0.07)');
+}
+
+function loadData() {
+  try {
+    var s = localStorage.getItem('se_state');
+    if (s) { var o = JSON.parse(s); for (var k in o) state[k] = o[k]; }
+  } catch(e) {}
+}
+
+function saveState() {
+  try { localStorage.setItem('se_state', JSON.stringify(state)); } catch(e) {}
+}
+
+function getEntries(week, day, stem) {
+  var key = 'se_e_' + week + '_' + day + '_' + stem;
+  try { var v = localStorage.getItem(key); return v ? JSON.parse(v) : []; } catch(e) { return []; }
+}
+
+function saveEntries(week, day, stem, arr) {
+  var key = 'se_e_' + week + '_' + day + '_' + stem;
+  try { localStorage.setItem(key, JSON.stringify(arr)); } catch(e) {}
+}
+
+function getReflection(week) {
+  var key = 'se_r_' + week;
+  try { var v = localStorage.getItem(key); return v ? JSON.parse(v) : []; } catch(e) { return []; }
+}
+
+function saveReflection(week, arr) {
+  var key = 'se_r_' + week;
+  try { localStorage.setItem(key, JSON.stringify(arr)); } catch(e) {}
+}
+
+function isDayDone(week, day) {
+  var stems = WEEKS[week].stems;
+  for (var i = 0; i < stems.length; i++) {
+    if (getEntries(week, day, i).length >= 6) return true;
+  }
+  return false;
+}
+
+function allDaysDone(week) {
+  for (var d = 0; d < 5; d++) {
+    if (!isDayDone(week, d)) return false;
+  }
+  return true;
+}
+
+function isWeekDone(week) {
+  return allDaysDone(week) && getReflection(week).length >= 1;
+}
+
+function getTotalEntries(week) {
+  var total = 0;
+  for (var d = 0; d < 5; d++) {
+    for (var s = 0; s < WEEKS[week].stems.length; s++) {
+      total += getEntries(week, d, s).length;
+    }
+  }
+  total += getReflection(week).length;
+  return total;
+}
+
+function getDayEntryCount(week, day) {
+  var total = 0;
+  for (var s = 0; s < WEEKS[week].stems.length; s++) {
+    total += getEntries(week, day, s).length;
+  }
+  return total;
+}
+
+function checkAutoAdvance() {
+  // Check if current day is done -> advance day
+  if (isDayDone(state.currentWeek, state.currentDay)) {
+    if (state.currentDay < 4) {
+      state.currentDay++;
+      saveState();
+      return true;
+    }
+  }
+  return false;
+}
+
+function checkWeekDone() {
+  if (isWeekDone(state.currentWeek)) {
+    if (state.currentWeek < 30) {
+      state.currentWeek++;
+      state.currentDay = 0;
+      saveState();
+      return true;
+    }
+  }
+  return false;
+}
+
+// ==================== THEME ====================
+function applyTheme() {
+  if (state.darkMode) {
+    document.body.classList.remove('light-mode');
+  } else {
+    document.body.classList.add('light-mode');
+  }
+  applyAccent();
+}
+
+function toggleTheme() {
+  state.darkMode = !state.darkMode;
+  saveState();
+  applyTheme();
+}
+
+// ==================== NAV ====================
+var currentScreen = 'home';
+var screenStack = [];
+
+function navTo(screen) {
+  var old = document.getElementById('screen-' + currentScreen);
+  if (old) old.classList.remove('active');
+  currentScreen = screen;
+  var el = document.getElementById('screen-' + screen);
+  if (el) el.classList.add('active');
+  var items = document.querySelectorAll('.nav-item');
+  for (var i = 0; i < items.length; i++) {
+    items[i].classList.toggle('active', items[i].getAttribute('data-screen') === screen);
+  }
+  if (screen === 'home') renderHome();
+  if (screen === 'weeks') renderWeeks();
+  if (screen === 'guide') renderGuide();
+}
+
+function pushScreen(screen) {
+  screenStack.push(currentScreen);
+  var old = document.getElementById('screen-' + currentScreen);
+  if (old) old.classList.remove('active');
+  currentScreen = screen;
+  var el = document.getElementById('screen-' + screen);
+  if (el) el.classList.add('active');
+}
+
+function popScreen() {
+  var prev = screenStack.pop() || 'home';
+  var old = document.getElementById('screen-' + currentScreen);
+  if (old) old.classList.remove('active');
+  currentScreen = prev;
+  var el = document.getElementById('screen-' + prev);
+  if (el) el.classList.add('active');
+  if (prev === 'home') renderHome();
+  if (prev === 'weeks') renderWeeks();
+  if (prev === 'detail') renderDetail(state.focusWeek);
+}
+
+// ==================== HOME ====================
+function renderHome() {
+  var w = state.currentWeek;
+  var d = state.currentDay;
+  var wk = WEEKS[w];
+  var totalDone = 0;
+  for (var i = 0; i < 31; i++) { if (isWeekDone(i)) totalDone++; }
+  var dayEntries = getDayEntryCount(w, d);
+  var maxEntries = wk.stems.length * 6;
+  var pct = Math.min(100, Math.round((dayEntries / maxEntries) * 100));
+
+  var dotsHtml = '';
+  for (var di = 0; di < 5; di++) {
+    var cls = isDayDone(w, di) ? 'done' : (di === d ? 'active' : '');
+    dotsHtml += '<div class="dot ' + cls + '"></div>';
+  }
+
+  var reflDone = getReflection(w).length >= 1;
+  var reflectHtml = '';
+  if (allDaysDone(w)) {
+    reflectHtml = '<div class="card" style="cursor:pointer;" onclick="openReflect(' + w + ')">' +
+      '<div style="display:flex;align-items:center;justify-content:space-between;">' +
+      '<div>' +
+      '<div style="font-size:11px;font-weight:700;color:var(--orange);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:4px;">Wochenende</div>' +
+      '<div style="font-size:15px;font-weight:600;">Wochenreflexion</div>' +
+      '<div style="font-size:12px;color:var(--text3);margin-top:2px;">' + getReflection(w).length + ' Einträge</div>' +
+      '</div>' +
+      '<div style="font-size:22px;">' + (reflDone ? '✔️' : '➜') + '</div>' +
+      '</div></div>';
+  }
+
+  var html = '<div class="fade-in">';
+
+  // Hero card
+  html += '<div class="card-hero" style="margin-top:12px;">';
+  html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">';
+  html += '<div>';
+  html += '<div class="badge badge-green" style="margin-bottom:8px;">Woche ' + (w+1) + ' • Tag ' + (d+1) + '</div>';
+  html += '<div style="font-size:22px;font-weight:700;line-height:1.3;">' + esc(wk.theme) + '</div>';
+  html += '</div>';
+  html += '<div style="text-align:center;">';
+  html += '<div style="font-size:32px;font-weight:800;color:var(--accent);">' + totalDone + '</div>';
+  html += '<div style="font-size:11px;color:var(--text3);">Wochen</div>';
+  html += '</div>';
+  html += '</div>';
+  html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">';
+  html += '<div style="font-size:13px;color:var(--text3);">Tagesfortschritt</div>';
+  html += '<div style="font-size:13px;color:var(--accent);font-weight:600;">' + dayEntries + ' Einträge</div>';
+  html += '</div>';
+  html += '<div class="progress-bar"><div class="progress-fill" style="width:' + pct + '%;"></div></div>';
+  html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-top:14px;">';
+  html += '<div class="dots">' + dotsHtml + '</div>';
+  html += '<button onclick="openFocus(' + w + ',' + d + ',0)" style="background:var(--accent);color:#000;border:none;border-radius:12px;padding:10px 20px;font-size:14px;font-weight:700;cursor:pointer;">Jetzt starten &#10095;</button>';
+  html += '</div>';
+  html += '</div>';
+
+  // Stats
+  html += '<div class="stats-row">';
+  html += '<div class="stat-card"><div class="stat-num">' + (w+1) + '</div><div class="stat-label">Aktuelle Woche</div></div>';
+  html += '<div class="stat-card"><div class="stat-num">' + (d+1) + '</div><div class="stat-label">Aktueller Tag</div></div>';
+  html += '<div class="stat-card"><div class="stat-num">' + totalDone + '</div><div class="stat-label">Abgeschlossen</div></div>';
+  html += '</div>';
+
+  // First stem preview
+  html += '<div class="section-title">Heutige Sätze</div>';
+  for (var si = 0; si < wk.stems.length; si++) {
+    var cnt = getEntries(w, d, si).length;
+    var ready = cnt >= 6;
+    html += '<div class="card" style="cursor:pointer;" onclick="openFocus(' + w + ',' + d + ',' + si + ')">';
+    html += '<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">';
+    html += '<div style="flex:1;min-width:0;">';
+    html += '<div style="font-size:15px;font-weight:500;line-height:1.5;color:' + (ready ? 'var(--accent)' : 'var(--text)') + ';">' + esc(wk.stems[si]) + '</div>';
+    html += '<div style="font-size:12px;color:' + (ready ? 'var(--accent)' : 'var(--text3)') + ';margin-top:4px;">' + cnt + '/6 Einträge' + (ready ? ' ✓' : '') + '</div>';
+    html += '</div>';
+    html += '<div class="check-circle ' + (ready ? 'done' : '') + '">' + (ready ? '✓' : '') + '</div>';
+    html += '</div></div>';
+  }
+
+  html += reflectHtml;
+  html += '</div>';
+
+  document.getElementById('home-scroll').innerHTML = html;
+}
+
+// ==================== WEEK LIST ====================
+function renderWeeks() {
+  var html = '<div style="padding:8px 0;">';
+  for (var i = 0; i < 31; i++) {
+    var done = isWeekDone(i);
+    var isCurrent = i === state.currentWeek;
+    html += '<div class="week-item ' + (isCurrent ? 'current-week' : '') + '" onclick="openDetail(' + i + ')">';
+    html += '<div class="week-num ' + (done ? 'done' : '') + '">' + (done ? '✓' : (i+1)) + '</div>';
+    html += '<div class="week-info">';
+    html += '<div class="week-name">' + esc(WEEKS[i].theme) + '</div>';
+    html += '<div class="week-sub">Woche ' + (i+1) + ' • ' + WEEKS[i].stems.length + ' Sätze • ' + getTotalEntries(i) + ' Einträge</div>';
+    html += '</div>';
+    if (done) {
+      html += '<div class="week-arrow" style="color:var(--accent);">✓</div>';
+    } else {
+      html += '<div class="week-arrow">&#8250;</div>';
+    }
+    html += '</div>';
+  }
+  html += '</div>';
+  document.getElementById('weeks-scroll').innerHTML = html;
+}
+
+// ==================== DETAIL ====================
+function openDetail(w) {
+  state.focusWeek = w;
+  pushScreen('detail');
+  renderDetail(w);
+}
+
+function renderDetail(w) {
+  var wk = WEEKS[w];
+  var done = isWeekDone(w);
+  var isCurrent = w === state.currentWeek;
+
+  var html = '<div class="fade-in">';
+
+  // Hero
+  html += '<div class="card-hero' + (isCurrent ? '' : ' card-hero-blue') + '" style="margin-top:4px;">';
+  html += '<div class="badge ' + (done ? 'badge-green' : (isCurrent ? 'badge-green' : 'badge-gray')) + '" style="margin-bottom:10px;">Woche ' + (w+1) + (isCurrent ? ' • Aktuell' : (done ? ' • Abgeschlossen' : '')) + '</div>';
+  html += '<div style="font-size:26px;font-weight:800;margin-bottom:8px;">' + esc(wk.theme) + '</div>';
+  html += '<div style="font-size:13px;color:var(--text3);">' + getTotalEntries(w) + ' Einträge gesamt</div>';
+  html += '</div>';
+
+  // Day tabs + stems
+  html += '<div class="section-title" style="margin-top:4px;">Tage</div>';
+  for (var d = 0; d < 5; d++) {
+    var dayDone = isDayDone(w, d);
+    var isCurrentDay = w === state.currentWeek && d === state.currentDay;
+    html += '<div class="card" style="cursor:pointer;" onclick="openFocus(' + w + ',' + d + ',0)">';
+    html += '<div style="display:flex;align-items:center;justify-content:space-between;">';
+    html += '<div style="display:flex;align-items:center;gap:10px;">';
+    html += '<div class="check-circle ' + (dayDone ? 'done' : '') + '">' + (dayDone ? '✓' : '') + '</div>';
+    html += '<div>';
+    html += '<div style="font-size:15px;font-weight:600;">Tag ' + (d+1) + (isCurrentDay ? ' <span style=\'color:var(--accent);font-size:12px;\'>● Aktiv</span>' : '') + '</div>';
+    html += '<div style="font-size:12px;color:var(--text3);margin-top:2px;">' + getDayEntryCount(w, d) + ' Einträge</div>';
+    html += '</div></div>';
+    html += '<div style="color:var(--text3);">&#8250;</div>';
+    html += '</div></div>';
+  }
+
+  // Reflection
+  var reflDone = getReflection(w).length >= 1;
+  var reflLocked = false;
+  html += '<div class="section-title">Wochenende</div>';
+  html += '<div class="card" style="cursor:pointer;" onclick="openReflect(' + w + ')">';
+  html += '<div style="display:flex;align-items:center;justify-content:space-between;">';
+  html += '<div style="display:flex;align-items:center;gap:10px;">';
+  html += '<div class="check-circle ' + (reflDone ? 'done' : '') + '">' + (reflDone ? '✓' : '') + '</div>';
+  html += '<div>';
+  html += '<div style="font-size:15px;font-weight:600;">Wochenreflexion</div>';
+  html += '<div style="font-size:12px;color:var(--text3);margin-top:2px;">' + getReflection(w).length + ' Einträge</div>';
+  html += '</div></div>';
+  html += '<div style="color:var(--text3);">&#8250;</div>';
+  html += '</div></div>';
+
+  html += '</div>';
+  document.getElementById('detail-scroll').innerHTML = html;
+}
+
+// ==================== FOCUS ====================
+function openFocus(w, d, s) {
+  state.focusWeek = w;
+  state.focusDay = d;
+  state.focusStem = s;
+  pushScreen('focus');
+  renderFocus();
+}
+
+function renderFocus() {
+  var w = state.focusWeek;
+  var d = state.focusDay;
+  var s = state.focusStem;
+  var wk = WEEKS[w];
+
+  document.getElementById('focus-header-right').textContent = 'W' + (w+1) + ' • T' + (d+1);
+
+  // Stem info
+  var cnt = getEntries(w, d, s).length;
+  var ready = cnt >= 6;
+  var stemHtml = '<div class="stem-card active-stem">';
+  stemHtml += '<div class="stem-title">Aktueller Satz</div>';
+  stemHtml += '<div class="stem-text">' + esc(wk.stems[s]) + '</div>';
+  stemHtml += '<div class="stem-count ' + (ready ? 'ready' : '') + '">' + cnt + '/6 Einträge' + (ready ? ' ✓ Fertig!' : ' – Noch ' + (6-cnt) + ' nötig') + '</div>';
+  stemHtml += '</div>';
+  document.getElementById('focus-stem-info').innerHTML = stemHtml;
+
+  // Day tabs
+  var dayHtml = '';
+  for (var di = 0; di < 5; di++) {
+    var dayDone = isDayDone(w, di);
+    dayHtml += '<div class="tab ' + (di === d ? 'active' : (dayDone ? 'done-tab' : '')) + '" onclick="switchFocusDay(' + di + ')">Tag ' + (di+1) + (dayDone && di !== d ? ' ✓' : '') + '</div>';
+  }
+  document.getElementById('focus-day-tabs').innerHTML = dayHtml;
+
+  // Stem tabs
+  var stemTabHtml = '';
+  for (var si = 0; si < wk.stems.length; si++) {
+    var sCnt = getEntries(w, d, si).length;
+    var sReady = sCnt >= 6;
+    stemTabHtml += '<div class="tab ' + (si === s ? 'active' : (sReady ? 'done-tab' : '')) + '" onclick="switchFocusStem(' + si + ')">S' + (si+1) + (sReady && si !== s ? '✓' : '') + '</div>';
+  }
+  document.getElementById('focus-stem-tabs').innerHTML = stemTabHtml;
+
+  renderFocusEntries();
+}
+
+function renderFocusEntries() {
+  var w = state.focusWeek;
+  var d = state.focusDay;
+  var s = state.focusStem;
+  var entries = getEntries(w, d, s);
+
+  var html = '';
+  if (entries.length === 0) {
+    html = '<div class="empty-state"><div class="empty-icon">✍️</div><div class="empty-text">Vervollständige den Satz mindestens 6 Mal.<br>Schreib spontan – ohne zu überlegen.</div></div>';
+  } else {
+    html = '<div style="padding:0 16px;">';
+    for (var i = entries.length - 1; i >= 0; i--) {
+      var idx = i;
+      html += '<div class="entry-item">';
+      html += '<div style="color:var(--text3);font-size:12px;padding-top:3px;min-width:20px;">' + (i+1) + '</div>';
+      html += '<div class="entry-text">' + esc(entries[i]) + '</div>';
+      html += '<button class="entry-del" onclick="delEntry(' + idx + ')">&#10005;</button>';
+      html += '</div>';
+    }
+    html += '</div>';
+  }
+  document.getElementById('focus-entries').innerHTML = html;
+  document.getElementById('focus-input').value = '';
+}
+
+function switchFocusDay(d) {
+  state.focusDay = d;
+  renderFocus();
+}
+
+function switchFocusStem(s) {
+  state.focusStem = s;
+  renderFocus();
+}
+
+function delEntry(idx) {
+  var w = state.focusWeek;
+  var d = state.focusDay;
+  var s = state.focusStem;
+  var entries = getEntries(w, d, s);
+  entries.splice(idx, 1);
+  saveEntries(w, d, s, entries);
+  renderFocus();
+}
+
+function addFocusEntry() {
+  var input = document.getElementById('focus-input');
+  var val = input.value.trim();
+  if (!val) return;
+  var w = state.focusWeek;
+  var d = state.focusDay;
+  var s = state.focusStem;
+  var entries = getEntries(w, d, s);
+  entries.push(val);
+  saveEntries(w, d, s, entries);
+  input.value = '';
+  input.style.height = '42px';
+  renderFocus();
+  if (entries.length === 6) showToast('✓ Satz ' + (s+1) + ' abgeschlossen!');
+}
+
+function closeFocus() {
+  var w = state.focusWeek;
+  var d = state.focusDay;
+  // Auto-advance if done
+  if (w === state.currentWeek && d === state.currentDay) {
+    if (isDayDone(w, d)) {
+      if (state.currentDay < 4) {
+        state.currentDay++;
+        saveState();
+        showToast('✓ Tag ' + d + ' fertig! Tag ' + (state.currentDay+1) + ' freigeschaltet.');
+      } else {
+        saveState();
+        showToast('✓ Alle 5 Tage abgeschlossen! Jetzt reflektieren.');
+      }
+    }
+  }
+  popScreen();
+}
+
+// ==================== REFLECTION ====================
+function openReflect(w) {
+  state.reflectWeek = w;
+  pushScreen('reflect');
+  renderReflect();
+}
+
+function renderReflect() {
+  var w = state.reflectWeek;
+  document.getElementById('reflect-week-label').textContent = 'Woche ' + (w+1);
+  document.getElementById('reflect-stem-text').textContent = REFLECTION_STEM;
+  var entries = getReflection(w);
+  document.getElementById('reflect-count').textContent = entries.length + ' Einträge';
+
+  var html = '';
+  if (entries.length === 0) {
+    html = '<div class="empty-state"><div class="empty-icon">🔄</div><div class="empty-text">Lies deine Einträge der Woche durch<br>und reflektiere dann frei.</div></div>';
+  } else {
+    html = '<div style="padding:0 16px;">';
+    for (var i = entries.length - 1; i >= 0; i--) {
+      var idx = i;
+      html += '<div class="entry-item">';
+      html += '<div style="color:var(--text3);font-size:12px;padding-top:3px;min-width:20px;">' + (i+1) + '</div>';
+      html += '<div class="entry-text">' + esc(entries[i]) + '</div>';
+      html += '<button class="entry-del" onclick="delReflection(' + idx + ')">&#10005;</button>';
+      html += '</div>';
+    }
+    html += '</div>';
+  }
+  document.getElementById('reflect-entries').innerHTML = html;
+  document.getElementById('reflect-input').value = '';
+}
+
+function delReflection(idx) {
+  var w = state.reflectWeek;
+  var entries = getReflection(w);
+  entries.splice(idx, 1);
+  saveReflection(w, entries);
+  renderReflect();
+}
+
+function addReflectionEntry() {
+  var input = document.getElementById('reflect-input');
+  var val = input.value.trim();
+  if (!val) return;
+  var w = state.reflectWeek;
+  var entries = getReflection(w);
+  entries.push(val);
+  saveReflection(w, entries);
+  input.value = '';
+  input.style.height = '42px';
+  renderReflect();
+  // Check week done
+  if (w === state.currentWeek && isWeekDone(w)) {
+    if (state.currentWeek < 30) {
+      var old = state.currentWeek + 1;
+      state.currentWeek++;
+      state.currentDay = 0;
+      saveState();
+      showToast('🎉 Woche ' + w + ' abgeschlossen! Woche ' + old + ' freigeschaltet!');
+    } else {
+      showToast('🎉 Programm abgeschlossen! Herzlichen Glückwunsch!');
+    }
+  }
+  document.getElementById('reflect-count').textContent = entries.length + ' Einträge';
+}
+
+// ==================== GUIDE ====================
+function renderGuide() {
+  var html = '<div class="fade-in" style="padding-bottom:24px;">';
+
+  html += '<div class="card" style="margin-top:8px;background:linear-gradient(135deg,#1a1a2e,#0d0d1a);border-color:rgba(10,132,255,0.3);">';
+  html += '<div style="font-size:13px;font-weight:700;color:var(--blue);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:10px;">Brandons Schlüsselzitat</div>';
+  html += '<div style="font-size:16px;line-height:1.7;color:var(--text2);font-style:italic;">&ldquo;Das Niveau unseres Selbstwerts hat tiefgreifende Auswirkungen auf jeden Aspekt unserer Existenz.&rdquo;</div>';
+  html += '<div style="font-size:12px;color:var(--text3);margin-top:8px;">&#8212; Nathaniel Branden</div>';
+  html += '</div>';
+
+  html += '<div class="section-title" style="margin-top:16px;">Die Methode</div>';
+  html += '<div class="card">';
+  html += '<div style="font-size:15px;line-height:1.7;color:var(--text2);">';
+  html += 'Schreibe jeden Morgen (Mo&#8211;Fr) jeden Satzanfang 6&#8211;10 Mal zu Ende &#8211; so schnell wie möglich, ohne nachzudenken. Am Wochenende lese alles durch und reflektiere mit dem Reflexionssatz.';
+  html += '</div>';
+  html += '</div>';
+
+  html += '<div class="section-title" style="margin-top:16px;">Die 6 Säulen</div>';
+  html += '<div class="card">';
+  for (var i = 0; i < PILLARS.length; i++) {
+    html += '<div class="pillar-item">';
+    html += '<div class="pillar-num">' + (i+1) + '</div>';
+    html += '<div class="pillar-info">';
+    html += '<div class="pillar-name">' + esc(PILLARS[i].name) + '</div>';
+    html += '<div class="pillar-weeks">' + esc(PILLARS[i].weeks) + '</div>';
+    html += '</div></div>';
+  }
+  html += '</div>';
+
+  html += '<div class="section-title" style="margin-top:16px;">Die Spiegelübung</div>';
+  html += '<div class="card">';
+  html += '<div style="font-size:15px;line-height:1.7;color:var(--text2);">';
+  html += 'Schaue dir täglich in die Augen und sage: <strong style="color:var(--text);">&ldquo;Ich akzeptiere mich vollständig.&rdquo;</strong> Beobachte, was in dir aufsteigt &#8211; Widerstand, Emotionen, Gedanken. Urteile nicht darüber.';
+  html += '</div></div>';
+
+  html += '<div class="section-title" style="margin-top:16px;">Regeln</div>';
+  html += '<div class="card">';
+  var rules = [
+    'Niemals weniger als 6 Ergänzungen pro Satz',
+    'Nicht denken &#8211; Spontan schreiben',
+    'Jede Sitzung max. 10 Minuten',
+    'Ergänzungen müssen grammatikalisch passen',
+    'Auch erfundene Enden sind erlaubt',
+    'Muster über die Zeit beobachten'
+  ];
+  for (var ri = 0; ri < rules.length; ri++) {
+    html += '<div style="display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)' + (ri === rules.length-1 ? ';border:none' : '') + ';">';
+    html += '<div style="color:var(--accent);font-weight:700;flex-shrink:0;">' + (ri+1) + '.</div>';
+    html += '<div style="font-size:14px;color:var(--text2);line-height:1.5;">' + rules[ri] + '</div>';
+    html += '</div>';
+  }
+  html += '</div>';
+
+  html += '</div>';
+  document.getElementById('guide-scroll').innerHTML = html;
+}
+
+// ==================== UTILS ====================
+function esc(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function showToast(msg) {
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(function() { t.classList.remove('show'); }, 2800);
+}
+
+// ==================== EVENTS ====================
+document.getElementById('detail-back').addEventListener('click', function() { popScreen(); });
+document.getElementById('focus-back').addEventListener('click', function() { closeFocus(); });
+document.getElementById('reflect-back').addEventListener('click', function() { popScreen(); renderHome(); });
+
+document.getElementById('focus-send').addEventListener('click', addFocusEntry);
+document.getElementById('reflect-send').addEventListener('click', addReflectionEntry);
+
+document.getElementById('focus-input').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); addFocusEntry(); }
+});
+document.getElementById('reflect-input').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); addReflectionEntry(); }
+});
+
+// Auto-resize textareas
+function autoResize(ta) {
+  ta.style.height = '42px';
+  ta.style.height = Math.min(ta.scrollHeight, 120) + 'px';
+}
+document.getElementById('focus-input').addEventListener('input', function() { autoResize(this); });
+document.getElementById('reflect-input').addEventListener('input', function() { autoResize(this); });
+
+// Icon buttons open the appearance panel
+var themeIdsOld = ['theme-toggle','theme-toggle2','theme-toggle3','theme-toggle4'];
+for (var tio = 0; tio < themeIdsOld.length; tio++) {
+  (function(id) {
+    document.getElementById(id).addEventListener('click', openAccentModal);
+  })(themeIdsOld[tio]);
+}
+
+// ==================== ACCENT PICKER ====================
+function renderAccentSwatches() {
+  var html = '';
+  for (var i = 0; i < ACCENTS.length; i++) {
+    var a = ACCENTS[i];
+    var sel = a.id === state.accent;
+    html += '<div class="swatch' + (sel ? ' selected' : '') + (a.light ? ' light-swatch' : '') + '" ';
+    html += 'style="background:' + a.hex + ';" ';
+    html += 'onclick="selectAccent(\'' + a.id + '\')" title="' + a.label + '"></div>';
+  }
+  document.getElementById('accent-swatches').innerHTML = html;
+}
+
+function selectAccent(id) {
+  state.accent = id;
+  saveState();
+  applyAccent();
+  renderAccentSwatches();
+}
+
+function openAccentModal() {
+  renderAccentSwatches();
+  var dmBtn = document.getElementById('dark-mode-toggle');
+  if (dmBtn) dmBtn.innerHTML = state.darkMode ? '&#9680;' : '&#9728;';
+  document.getElementById('accent-modal').classList.add('open');
+}
+
+document.getElementById('accent-close').addEventListener('click', function() {
+  document.getElementById('accent-modal').classList.remove('open');
+});
+document.getElementById('dark-mode-toggle').addEventListener('click', function() {
+  state.darkMode = !state.darkMode;
+  saveState();
+  applyTheme();
+  this.innerHTML = state.darkMode ? '&#9680;' : '&#9728;';
+});
+document.getElementById('accent-modal').addEventListener('click', function(e) {
+  if (e.target === this) this.classList.remove('open');
+});
+
+// Wire all theme toggle buttons to open accent picker instead
+var themeIdsFull = ['theme-toggle','theme-toggle2','theme-toggle3','theme-toggle4'];
+for (var tif = 0; tif < themeIdsFull.length; tif++) {
+  document.getElementById(themeIdsFull[tif]).innerHTML = '&#9676;';
+  document.getElementById(themeIdsFull[tif]).title = 'Farbe & Modus';
+}
+
+// ==================== INIT ====================
+loadData();
+applyTheme();
+applyAccent();
+renderHome();
+renderGuide();
+</script>
+</body>
+</html>
