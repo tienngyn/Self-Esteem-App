@@ -1,0 +1,3277 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Die Sechs Säulen</title>
+<style>
+  :root {
+    --bg: #000000;
+    --card: #1C1C1E;
+    --card2: #2C2C2E;
+    --card3: #3A3A3C;
+    --border: rgba(255,255,255,0.08);
+    --border2: rgba(255,255,255,0.14);
+    --text: #FFFFFF;
+    --text2: rgba(255,255,255,0.6);
+    --text3: rgba(255,255,255,0.35);
+    --accent: #FFFFFF;
+    --accent2: rgba(255,255,255,0.18);
+    --accent-rgb: 48,209,88;
+    --blue: #0A84FF;
+    --orange: #FF9F0A;
+    --radius: 18px;
+    --radius-sm: 12px;
+    --font: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', sans-serif;
+  }
+  .light-mode {
+    --bg: #F2F2F7;
+    --card: #FFFFFF;
+    --card2: #F2F2F7;
+    --card3: #E5E5EA;
+    --border: rgba(0,0,0,0.06);
+    --border2: rgba(0,0,0,0.12);
+    --text: #000000;
+    --text2: rgba(0,0,0,0.55);
+    --text3: rgba(0,0,0,0.30);
+    --accent2: var(--accent-12);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; background: var(--bg); color: var(--text); font-family: var(--font); overscroll-behavior: none; }
+  body { overflow: hidden; }
+  #app { height: 100%; display: flex; flex-direction: column; max-width: 430px; margin: 0 auto; position: relative; }
+  .screen { display: none; flex: 1; flex-direction: column; overflow: hidden; }
+  .screen.active { display: flex; }
+  .flex-1 { flex: 1; min-height: 0; }
+  .scrollable { overflow-y: auto; -webkit-overflow-scrolling: touch; padding-bottom: 20px; }
+  .scrollable::-webkit-scrollbar { display: none; }
+
+  /* NAV BAR */
+  .nav-bar {
+    display: flex; align-items: center; justify-content: space-around;
+    background: rgba(28,28,30,0.92); backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-top: 1px solid var(--border); padding: 4px 0 4px;
+    flex-shrink: 0; z-index: 100;
+  }
+  .nav-bar.hidden { display: none; }
+  .light-mode .nav-bar { background: rgba(242,242,247,0.92); }
+  .light-mode .nav-bar.hidden { display: none; }
+  .nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer; padding: 4px 16px; border-radius: 10px; transition: opacity 0.15s; flex: 1; }
+  .nav-item:active { opacity: 0.6; }
+  .nav-icon { font-size: 22px; line-height: 1; transition: color 0.2s; }
+  .nav-label { font-size: 10px; font-weight: 500; color: var(--text3); transition: color 0.2s; margin-bottom: 0; }
+  .nav-item.active .nav-icon, .nav-item.active .nav-label { color: var(--accent); }
+
+  /* TOP BAR */
+  .top-bar { display: flex; align-items: center; justify-content: space-between; padding: 12px 20px 8px; padding-top: max(12px, env(safe-area-inset-top)); flex-shrink: 0; }
+  .top-bar-title { font-size: 26px; font-weight: 700; letter-spacing: -0.5px; }
+  .top-bar-sub { font-size: 14px; color: var(--text2); }
+  .icon-btn { width: 36px; height: 36px; border-radius: 50%; background: var(--card2); border: none; color: var(--text); font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: opacity 0.15s; }
+  .icon-btn:active { opacity: 0.6; }
+
+  /* CARDS */
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; margin: 0 16px 10px; }
+  .card-sm { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 14px; }
+  .card-hero { background: linear-gradient(135deg, var(--accent2) 0%, var(--accent-07) 100%); border: 1px solid var(--accent-25); border-radius: var(--radius); padding: 16px; margin: 0 16px 10px; }
+  .card-hero-blue { background: linear-gradient(135deg, #0D1C2F 0%, #060F1F 100%); border: 1px solid rgba(10,132,255,0.25); }
+
+  /* THEME PICKER MODAL */
+  #accent-modal { position: fixed; inset: 0; z-index: 9000; display: none; align-items: flex-end; justify-content: center; background: rgba(0,0,0,0.5); }
+  #accent-modal.open { display: flex; }
+  #accent-sheet { background: var(--card); border-radius: 24px 24px 0 0; padding: 20px 20px 36px; width: 100%; max-width: 430px; max-height: 88vh; overflow-y: auto; }
+  #accent-sheet::-webkit-scrollbar { display: none; }
+  .accent-title { font-size: 17px; font-weight: 700; margin-bottom: 16px; text-align: center; }
+  .theme-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+  .theme-card { border-radius: 16px; padding: 14px 14px 12px; cursor: pointer; border: 2px solid transparent; transition: transform 0.15s; position: relative; min-height: 88px; display: flex; flex-direction: column; justify-content: flex-end; overflow: hidden; }
+  .theme-card:active { transform: scale(0.97); }
+  .theme-card.selected { border-color: rgba(255,255,255,0.75); }
+  .theme-card.selected::after { content: '\2713'; position: absolute; top: 10px; right: 10px; width: 22px; height: 22px; background: rgba(255,255,255,0.92); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 900; color: #000; }
+  .theme-label { font-size: 13px; font-weight: 700; color: rgba(255,255,255,0.95); text-shadow: 0 1px 4px rgba(0,0,0,0.5); }
+  .theme-sub { font-size: 10px; color: rgba(255,255,255,0.65); margin-top: 2px; }
+  #accent-close { width: 100%; background: var(--card2); border: none; color: var(--text); font-size: 16px; font-weight: 600; padding: 14px; border-radius: 14px; cursor: pointer; }
+  #accent-close:active { opacity: 0.7; }
+
+  /* BADGES */
+  .badge { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 20px; }
+  .badge-green { background: var(--accent); color: #000; font-weight: 700; }
+  .badge-gray { background: var(--card3); color: var(--text2); }
+  .badge-blue { background: rgba(10,132,255,0.15); color: var(--blue); }
+  .badge-orange { background: rgba(255,159,10,0.15); color: var(--orange); }
+
+  /* PROGRESS DOTS */
+  .dots { display: flex; gap: 6px; align-items: center; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--card3); transition: all 0.3s; }
+  .dot.done { background: var(--accent); }
+  .dot.active { background: var(--accent); opacity: 0.5; box-shadow: 0 0 0 3px var(--accent-20); }
+
+  /* WEEK LIST ITEM */
+  .week-item { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-bottom: 1px solid var(--border); cursor: pointer; transition: background 0.15s; }
+  .week-item:active { background: var(--card2); }
+  .week-item:last-child { border-bottom: none; }
+  .week-item.current-week { background: var(--accent2); border-left: 3px solid var(--accent); }
+  .week-num { width: 36px; height: 36px; border-radius: 10px; background: var(--card2); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; color: var(--text2); flex-shrink: 0; }
+  .week-num.done { background: var(--accent); color: #000; }
+  .week-info { flex: 1; min-width: 0; }
+  .week-name { font-size: 15px; font-weight: 600; }
+  .week-sub { font-size: 12px; color: var(--text3); margin-top: 2px; }
+  .week-arrow { color: var(--text3); font-size: 14px; }
+
+  /* TABS */
+  .tab-row { display: flex; gap: 6px; padding: 0 16px 12px; overflow-x: auto; flex-shrink: 0; }
+  .tab-row::-webkit-scrollbar { display: none; }
+  .tab { padding: 7px 14px; border-radius: 20px; font-size: 13px; font-weight: 600; background: var(--card); border: 1px solid var(--border); color: var(--text2); cursor: pointer; transition: all 0.2s; white-space: nowrap; flex-shrink: 0; }
+  .tab.active { background: var(--accent); color: #000; border-color: var(--accent); }
+  .tab.done-tab { border-color: var(--accent); color: var(--accent); }
+
+  /* ENTRY LIST */
+  .entry-item { display: flex; align-items: flex-start; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+  .entry-item:last-child { border-bottom: none; }
+  .entry-text { flex: 1; font-size: 15px; line-height: 1.5; }
+  .entry-del { background: none; border: none; color: var(--text3); font-size: 18px; cursor: pointer; padding: 0 4px; line-height: 1; flex-shrink: 0; transition: color 0.15s; }
+  .entry-del:active { color: #FF453A; }
+
+  /* INPUT */
+  .input-bar { display: flex; gap: 10px; padding: 12px 16px; background: var(--card); border-top: 1px solid var(--border); flex-shrink: 0; padding-bottom: max(16px, env(safe-area-inset-bottom)); }
+  .stem-input { flex: 1; background: var(--card2); border: 1px solid var(--border); border-radius: 12px; padding: 10px 14px; font-size: 16px; color: var(--text); font-family: var(--font); outline: none; transition: border-color 0.2s; resize: none; height: 42px; overflow: hidden; line-height: 1.4; }
+  .stem-input:focus { border-color: var(--accent); }
+  .stem-input::placeholder { color: var(--text3); }
+  .send-btn { width: 42px; height: 42px; border-radius: 50%; background: var(--accent); border: none; color: #000; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: opacity 0.15s; }
+  .send-btn:active { opacity: 0.7; }
+  .send-btn:disabled { background: var(--card3); color: var(--text3); cursor: default; }
+
+  /* STATS ROW */
+  .stats-row { display: flex; gap: 8px; padding: 0 16px 10px; }
+  .stat-card { flex: 1; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px 8px; text-align: center; }
+  .stat-num { font-size: 22px; font-weight: 700; color: var(--accent); }
+  .stat-label { font-size: 10px; color: var(--text3); margin-top: 1px; font-weight: 500; }
+
+  /* STEM CARD in focus */
+  .stem-card { background: var(--card2); border-radius: var(--radius-sm); padding: 12px 14px; margin: 0 16px 10px; border: 1px solid var(--border); }
+  .stem-card.active-stem { border-color: var(--accent); background: var(--accent2); }
+  .stem-title { font-size: 13px; font-weight: 600; color: var(--text2); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .stem-text { font-size: 17px; font-weight: 600; line-height: 1.4; }
+  .stem-count { font-size: 12px; color: var(--text3); margin-top: 4px; }
+  .stem-count.ready { color: var(--accent); }
+
+  /* BACK BTN */
+  .back-btn { background: none; border: none; color: var(--blue); font-size: 15px; font-weight: 400; cursor: pointer; display: flex; align-items: center; gap: 4px; padding: 0; }
+  .back-btn:active { opacity: 0.6; }
+
+  /* SECTION TITLE */
+  .section-title { font-size: 11px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: 0.8px; padding: 0 20px; margin-bottom: 6px; }
+
+  /* GUIDE */
+  .pillar-item { display: flex; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--border); align-items: flex-start; }
+  .pillar-item:last-child { border-bottom: none; }
+  .pillar-num { width: 28px; height: 28px; border-radius: 8px; background: var(--accent2); color: var(--accent); font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .pillar-info { flex: 1; }
+  .pillar-name { font-size: 15px; font-weight: 600; }
+  .pillar-weeks { font-size: 12px; color: var(--text3); margin-top: 2px; }
+
+  /* REFLECTION HEADER */
+  .reflection-header { background: linear-gradient(135deg, #1F1A00 0%, #0F0D00 100%); border: 1px solid rgba(255,159,10,0.25); border-radius: var(--radius); padding: 16px 20px; margin: 0 16px 12px; }
+
+  /* TOAST */
+  #toast { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--card2); border: 1px solid var(--border2); border-radius: 20px; padding: 10px 20px; font-size: 14px; font-weight: 600; color: var(--text); opacity: 0; transition: all 0.3s; z-index: 9999; pointer-events: none; white-space: nowrap; }
+  #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* ANIMATIONS */
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  .fade-in { animation: fadeIn 0.25s ease forwards; }
+
+  /* DIVIDER */
+  .divider { height: 1px; background: var(--border); margin: 8px 0; }
+
+  /* EMPTY STATE */
+  .empty-state { text-align: center; padding: 40px 20px; color: var(--text3); }
+  .empty-icon { font-size: 40px; margin-bottom: 12px; }
+  .empty-text { font-size: 15px; line-height: 1.5; }
+
+  /* PROGRESS BAR */
+  .progress-bar { height: 4px; background: var(--card3); border-radius: 2px; overflow: hidden; margin-top: 8px; }
+  .progress-fill { height: 100%; background: var(--accent); border-radius: 2px; transition: width 0.4s ease; }
+
+  /* LOCKED */
+  .locked { opacity: 0.35; pointer-events: none; }
+
+  /* CHECKBOX */
+  .check-circle { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--card3); display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 12px; }
+  .check-circle.done { background: var(--accent); border-color: var(--accent); color: #000; }
+</style>
+</head>
+<body>
+<div id="app">
+  <!-- HOME -->
+  <div class="screen active" id="screen-home">
+    <div class="top-bar">
+      <div>
+        <div class="top-bar-title">Die Sechs Säulen</div>
+        <div class="top-bar-sub">Selbstwert-Programm</div>
+      </div>
+      <button class="icon-btn" id="theme-toggle" title="Modus wechseln">&#9788;</button>
+    </div>
+    <div class="scrollable flex-1" id="home-scroll">
+      <!-- content injected by JS -->
+    </div>
+  </div>
+
+  <!-- WEEK LIST -->
+  <div class="screen" id="screen-weeks">
+    <div class="top-bar">
+      <div class="top-bar-title">31 Wochen</div>
+      <button class="icon-btn" id="theme-toggle2">&#9788;</button>
+    </div>
+    <div class="scrollable flex-1" id="weeks-scroll"></div>
+  </div>
+
+  <!-- WEEK DETAIL -->
+  <div class="screen" id="screen-detail">
+    <div class="top-bar" style="padding-top:max(16px,env(safe-area-inset-top));">
+      <button class="back-btn" id="detail-back">&#8249; Wochen</button>
+      <button class="icon-btn" id="theme-toggle3">&#9788;</button>
+    </div>
+    <div class="scrollable flex-1" id="detail-scroll"></div>
+  </div>
+
+  <!-- FOCUS -->
+  <div class="screen" id="screen-focus">
+    <div class="top-bar" style="padding-bottom:4px;padding-top:max(16px,env(safe-area-inset-top));">
+      <button class="back-btn" id="focus-back">&#8249; Zurück</button>
+      <div id="focus-header-right" style="font-size:13px;color:var(--text3);"></div>
+    </div>
+    <div id="focus-stem-info" style="padding:0 16px 8px;flex-shrink:0;"></div>
+    <div class="tab-row" id="focus-day-tabs"></div>
+    <div class="tab-row" id="focus-stem-tabs" style="padding-top:0;"></div>
+    <div class="scrollable flex-1" id="focus-entries"></div>
+    <div class="input-bar">
+      <textarea class="stem-input" id="focus-input" placeholder="Vervollständige den Satz …" rows="1"></textarea>
+      <button class="send-btn" id="focus-send">&#9650;</button>
+    </div>
+  </div>
+
+  <!-- WEEKEND REFLECTION -->
+  <div class="screen" id="screen-reflect">
+    <div class="top-bar" style="padding-bottom:4px;padding-top:max(16px,env(safe-area-inset-top));">
+      <button class="back-btn" id="reflect-back">&#8249; Zurück</button>
+      <div style="font-size:13px;color:var(--text3);" id="reflect-week-label"></div>
+    </div>
+    <!-- Tab bar: Lesen / Reflektieren -->
+    <div style="display:flex;gap:0;padding:0 16px 10px;flex-shrink:0;" id="reflect-tabs">
+      <button id="reflect-tab-read" onclick="switchReflectTab('read')"
+        style="flex:1;padding:9px 0;font-size:14px;font-weight:700;border:none;border-radius:12px 0 0 12px;cursor:pointer;transition:all 0.2s;">
+        Eintr&#228;ge lesen
+      </button>
+      <button id="reflect-tab-write" onclick="switchReflectTab('write')"
+        style="flex:1;padding:9px 0;font-size:14px;font-weight:700;border:none;border-radius:0 12px 12px 0;cursor:pointer;transition:all 0.2s;">
+        Reflektieren
+      </button>
+    </div>
+    <!-- READ panel -->
+    <div id="reflect-panel-read" class="scrollable flex-1" style="display:flex;flex-direction:column;"></div>
+    <!-- WRITE panel -->
+    <div id="reflect-panel-write" style="display:none;flex:1;flex-direction:column;overflow:hidden;">
+      <div class="reflection-header" style="margin:0 16px 10px;flex-shrink:0;">
+        <div style="font-size:11px;font-weight:700;color:var(--orange);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:6px;">Reflexionssatz</div>
+        <div style="font-size:15px;font-weight:700;line-height:1.4;" id="reflect-stem-text"></div>
+        <div style="font-size:12px;color:var(--text3);margin-top:6px;" id="reflect-count"></div>
+      </div>
+      <div class="scrollable flex-1" id="reflect-entries"></div>
+      <div class="input-bar">
+        <textarea class="stem-input" id="reflect-input" placeholder="Gedanke …" rows="1"></textarea>
+        <button class="send-btn" id="reflect-send">&#9650;</button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- SPIEGEL PROTOKOLL -->
+  <div class="screen" id="screen-mirror">
+    <div class="top-bar" style="padding-top:max(16px,env(safe-area-inset-top));padding-bottom:4px;">
+      <button class="back-btn" id="mirror-back">&#8249; Guide</button>
+      <div style="font-size:13px;color:var(--text3);">Spiegel&#252;bung</div>
+    </div>
+    <div class="scrollable flex-1" id="mirror-scroll"></div>
+  </div>
+
+  <!-- SICHTBARKEIT -->
+  <div class="screen" id="screen-visibility">
+    <div class="top-bar" style="padding-top:max(16px,env(safe-area-inset-top));padding-bottom:4px;">
+      <button class="back-btn" id="visibility-back">&#8249; Guide</button>
+      <div style="font-size:13px;color:var(--text3);">Sichtbarkeit</div>
+    </div>
+    <div class="scrollable flex-1" id="visibility-scroll"></div>
+  </div>
+
+  <!-- GUIDE -->
+  <div class="screen" id="screen-guide">
+    <div class="top-bar">
+      <div class="top-bar-title">Guide</div>
+      <button class="icon-btn" id="theme-toggle4">&#9788;</button>
+    </div>
+    <div class="scrollable flex-1" id="guide-scroll"></div>
+  </div>
+
+
+  <!-- BUCH -->
+  <div class="screen" id="screen-buch">
+    <div class="top-bar">
+      <div class="top-bar-title">Das Buch</div>
+      <button class="icon-btn" id="theme-toggle5">&#9881;</button>
+    </div>
+    <div class="scrollable flex-1" id="buch-scroll"></div>
+  </div>
+
+  <!-- BUCH KAPITEL DETAIL -->
+  <div class="screen" id="screen-chapter">
+    <div class="top-bar" style="padding-top:max(16px,env(safe-area-inset-top));">
+      <button class="back-btn" id="chapter-back">&#8249; Das Buch</button>
+    </div>
+    <div class="scrollable flex-1" id="chapter-scroll"></div>
+  </div>
+
+
+
+  <!-- EXPORT -->
+  <div class="screen" id="screen-export">
+    <div class="top-bar" style="padding-top:max(16px,env(safe-area-inset-top));padding-bottom:4px;">
+      <button class="back-btn" id="export-back">&#8249; Zurück</button>
+      <div style="font-size:13px;color:var(--text3);" id="export-week-label"></div>
+    </div>
+    <div class="scrollable flex-1" id="export-scroll"></div>
+  </div>
+
+  <!-- EINTRAEGE UEBERSICHT -->
+  <div class="screen" id="screen-entries">
+    <div class="top-bar" style="padding-top:max(16px,env(safe-area-inset-top));">
+      <button class="back-btn" id="entries-back">&#8249; Heute</button>
+      <div style="font-size:13px;color:var(--text3);">Alle Einträge</div>
+    </div>
+    <div style="padding:0 16px 8px;flex-shrink:0;">
+      <input type="text" id="entries-search" placeholder="Suchen …"
+        style="width:100%;background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:10px 14px;font-size:15px;color:var(--text);font-family:var(--font);outline:none;"
+        oninput="filterEntries(this.value)">
+    </div>
+    <div class="scrollable flex-1" id="entries-scroll"></div>
+  </div>
+
+  <!-- NAV -->
+  <div class="nav-bar">
+    <div class="nav-item active" data-screen="home" onclick="navTo('home')">
+      <div class="nav-icon">&#9679;</div>
+      <div class="nav-label">Heute</div>
+    </div>
+    <div class="nav-item" data-screen="weeks" onclick="navTo('weeks')">
+      <div class="nav-icon">&#9776;</div>
+      <div class="nav-label">Wochen</div>
+    </div>
+    <div class="nav-item" data-screen="buch" onclick="navTo('buch')">
+      <div class="nav-icon">&#9670;</div>
+      <div class="nav-label">Buch</div>
+    </div>
+    <div class="nav-item" data-screen="guide" onclick="navTo('guide')">
+      <div class="nav-icon">&#9432;</div>
+      <div class="nav-label">Guide</div>
+    </div>
+  </div>
+</div>
+
+<div id="accent-modal">
+  <div id="accent-sheet">
+    <div class="accent-title">Darstellung</div>
+    <div id="accent-swatches"></div>
+    <div style="height:1px;background:var(--border);margin:12px 0;"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:4px 0;margin-bottom:14px;">
+      <span style="font-size:15px;font-weight:600;">Dunkler Modus</span>
+      <button id="dark-mode-toggle" style="background:none;border:none;cursor:pointer;padding:0;font-size:24px;">&#9680;</button>
+    </div>
+    <button id="accent-close">Fertig</button>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ==================== DATA ====================
+var WEEKS = [
+  {
+    theme: "Grundlagen",
+    stems: [
+      "Wenn ich meinem Leben heute mehr Bewusstsein bringe –",
+      "Wenn ich mehr Verantwortung für meine Entscheidungen und Handlungen übernehme –",
+      "Wenn ich mehr Aufmerksamkeit darauf lenke, wie ich mit anderen umgehe –",
+      "Wenn ich mein Energieniveau um 5 Prozent steigere –"
+    ]
+  },
+  {
+    theme: "Bewusstsein vertiefen",
+    stems: [
+      "Wenn ich meinen wichtigen Beziehungen 5 Prozent mehr Bewusstsein bringe –",
+      "Wenn ich meinen Unsicherheiten 5 Prozent mehr Bewusstsein bringe –",
+      "Wenn ich meinen tiefsten Bedürfnissen und Wünschen 5 Prozent mehr Bewusstsein bringe –",
+      "Wenn ich meinen Gefühlen 5 Prozent mehr Bewusstsein bringe –"
+    ]
+  },
+  {
+    theme: "Zuhören und Menschen",
+    stems: [
+      "Wenn ich Zuhören als kreative Handlung betrachte –",
+      "Wenn ich bemerke, wie Menschen auf die Qualität meines Zuhörens reagieren –",
+      "Wenn ich meinen Umgang mit Menschen heute bewusster gestalte –",
+      "Wenn ich mich verpflichte, fair und wohlwollend mit Menschen umzugehen –"
+    ]
+  },
+  {
+    theme: "Selbstwert aktivieren",
+    stems: [
+      "Wenn ich meinen Aktivitäten heute ein höheres Maß an Selbstwert entgegenbringe –",
+      "Wenn ich meinen Beziehungen heute ein höheres Maß an Selbstwert entgegenbringe –",
+      "Wenn ich heute 5 Prozent selbstakzeptierender bin –",
+      "Wenn ich mich selbst akzeptiere, auch wenn ich Fehler mache –",
+      "Wenn ich mich selbst akzeptiere, auch wenn ich mich verwirrt und überwältigt fühle –"
+    ]
+  },
+  {
+    theme: "Körper und Konflikte",
+    stems: [
+      "Wenn ich meinen Körper mehr akzeptiere –",
+      "Wenn ich meinen Körper verleugne und ablehne –",
+      "Wenn ich meine Konflikte verleugne oder ablehne –",
+      "Wenn ich alle Teile von mir mehr akzeptiere –"
+    ]
+  },
+  {
+    theme: "Gefühle und Gedanken",
+    stems: [
+      "Wenn ich meinen Selbstwert heute steigern wollte, könnte ich –",
+      "Wenn ich meine Gefühle mehr akzeptiere –",
+      "Wenn ich meine Gefühle verleugne und ablehne –",
+      "Wenn ich meine Gedanken mehr akzeptiere –",
+      "Wenn ich meine Gedanken verleugne und ablehne –"
+    ]
+  },
+  {
+    theme: "Angst und Schmerz",
+    stems: [
+      "Wenn ich meine Ängste mehr akzeptiere –",
+      "Wenn ich meine Ängste verleugne und ablehne –",
+      "Wenn ich meinen Schmerz mehr akzeptiere –",
+      "Wenn ich meinen Schmerz verleugne und ablehne –"
+    ]
+  },
+  {
+    theme: "Wut und Sexualität",
+    stems: [
+      "Wenn ich meine Wut mehr akzeptiere –",
+      "Wenn ich meine Wut verleugne und ablehne –",
+      "Wenn ich meine Sexualität mehr akzeptiere –",
+      "Wenn ich meine Sexualität verleugne und ablehne –"
+    ]
+  },
+  {
+    theme: "Aufregung und Intelligenz",
+    stems: [
+      "Wenn ich meine Aufregung mehr akzeptiere –",
+      "Wenn ich meine Aufregung verleugne und ablehne –",
+      "Wenn ich meine Intelligenz mehr akzeptiere –",
+      "Wenn ich meine Intelligenz verleugne und ablehne –"
+    ]
+  },
+  {
+    theme: "Freude und Integration",
+    stems: [
+      "Wenn ich meine Freude mehr akzeptiere –",
+      "Wenn ich meine Freude verleugne und ablehne –",
+      "Wenn ich allen Teilen von mir mehr Bewusstsein bringe –",
+      "Während ich lerne, alle Teile von mir zu akzeptieren –"
+    ]
+  },
+  {
+    theme: "Selbstverantwortung",
+    stems: [
+      "Selbstverantwortung bedeutet für mich –",
+      "Wenn ich 5 Prozent mehr Verantwortung für mein Leben und Wohlbefinden übernehme –",
+      "Wenn ich Verantwortung für mein Leben und Wohlbefinden vermeide –",
+      "Wenn ich 5 Prozent mehr Verantwortung für das Erreichen meiner Ziele übernehme –",
+      "Wenn ich Verantwortung für das Erreichen meiner Ziele vermeide –"
+    ]
+  },
+  {
+    theme: "Verantwortung Beziehungen",
+    stems: [
+      "Wenn ich 5 Prozent mehr Verantwortung für den Erfolg meiner Beziehungen übernehme –",
+      "Manchmal halte ich mich passiv, wenn ich –",
+      "Manchmal mache ich mich hilflos, wenn ich –",
+      "Mir wird bewusst –"
+    ]
+  },
+  {
+    theme: "Verantwortung Leben",
+    stems: [
+      "Wenn ich 5 Prozent mehr Verantwortung für meinen Lebensstandard übernehme –",
+      "Wenn ich 5 Prozent mehr Verantwortung für die Wahl meiner Weggefährten übernehme –",
+      "Wenn ich 5 Prozent mehr Verantwortung für mein persönliches Glück übernehme –",
+      "Wenn ich 5 Prozent mehr Verantwortung für das Niveau meines Selbstwerts übernehme –"
+    ]
+  },
+  {
+    theme: "Selbstbehauptung",
+    stems: [
+      "Selbstbehauptung bedeutet für mich –",
+      "Wenn ich heute 5 Prozent selbstbehauptender lebe –",
+      "Wenn ich meine Gedanken und Gefühle heute mit Respekt behandle –",
+      "Wenn ich meine Wünsche heute mit Respekt behandle –"
+    ]
+  },
+  {
+    theme: "Eigene Bedürfnisse",
+    stems: [
+      "Wenn mir (als ich jung war) jemand gesagt hätte, meine Wünsche zählen wirklich –",
+      "Wenn mir (als ich jung war) beigebracht worden wäre, mein eigenes Leben zu ehren –",
+      "Wenn ich mein Leben als unwichtig behandle –",
+      "Wenn ich bereit wäre, ja zu sagen wenn ich ja will, und nein wenn ich nein will –",
+      "Wenn ich bereit wäre, Menschen die Musik in mir hören zu lassen –",
+      "Wenn ich 5 Prozent mehr von dem ausdrücken würde, wer ich bin –"
+    ]
+  },
+  {
+    theme: "Zielgerichtet leben",
+    stems: [
+      "Zielgerichtet leben bedeutet für mich –",
+      "Wenn ich 5 Prozent mehr Zielgerichtetheit in mein Leben bringe –",
+      "Wenn ich bei der Arbeit 5 Prozent zielgerichteter handele –",
+      "Wenn ich in meinen Beziehungen 5 Prozent zielgerichteter handele –"
+    ]
+  },
+  {
+    theme: "Ziele und Glück",
+    stems: [
+      "Wenn ich mit meinen tiefsten Sehnsüchten 5 Prozent zielgerichteter umgehe –",
+      "Wenn ich mehr Verantwortung dafür übernehme, meine Wünsche zu erfüllen –",
+      "Wenn ich mein Glück zu einem bewussten Ziel mache –"
+    ]
+  },
+  {
+    theme: "Integrität",
+    stems: [
+      "Integrität bedeutet für mich –",
+      "Wenn ich mir Situationen anschaue, in denen mir volle Integrität schwer fällt –",
+      "Wenn ich 5 Prozent mehr Integrität in mein Leben bringe –",
+      "Wenn ich 5 Prozent mehr Integrität in meine Arbeit bringe –"
+    ]
+  },
+  {
+    theme: "Integrität Beziehungen",
+    stems: [
+      "Wenn ich 5 Prozent mehr Integrität in meine Beziehungen bringe –",
+      "Wenn ich den Werten treu bleibe, die ich für richtig halte –",
+      "Wenn ich mich weigere, nach Werten zu leben, die ich nicht respektiere –",
+      "Wenn ich meinen Selbstrespekt als hohe Priorität behandle –"
+    ]
+  },
+  {
+    theme: "Das innere Kind",
+    stems: [
+      "Wenn das Kind in mir sprechen könnte, würde es sagen –",
+      "Wenn der Teenager, der ich einmal war, noch in mir lebt –",
+      "Wenn mein jugendliches Ich sprechen könnte, würde es sagen –",
+      "Bei dem Gedanken, meinem kindlichen Ich zu helfen –",
+      "Bei dem Gedanken, meinem jugendlichen Ich zu helfen –",
+      "Wenn ich mit meinen jüngeren Anteilen Freundschaft schließen könnte –"
+    ]
+  },
+  {
+    theme: "Jüngere Anteile akzeptieren",
+    stems: [
+      "Wenn mein kindliches Ich sich von mir akzeptiert fühlte –",
+      "Wenn mein jugendliches Ich das Gefühl hätte, ich stehe auf seiner Seite –",
+      "Wenn meine jüngeren Anteile mein Mitgefühl für ihre Kämpfe spürten –",
+      "Wenn ich mein kindliches Ich in die Arme nehmen könnte –",
+      "Wenn ich meinen jugendlichen Anteil in die Arme nehmen könnte –",
+      "Wenn ich den Mut und das Mitgefühl hätte, meine jüngeren Anteile zu umarmen und zu lieben –"
+    ]
+  },
+  {
+    theme: "Ablehnung erkennen",
+    stems: [
+      "Manchmal fühlt sich mein kindliches Ich von mir abgelehnt, wenn ich –",
+      "Manchmal fühlt sich mein jugendlicher Anteil von mir abgelehnt, wenn ich –",
+      "Eines der Dinge, die mein kindliches Ich von mir braucht und selten bekommt, ist –",
+      "Eines der Dinge, die mein jugendlicher Anteil von mir braucht und nicht bekommen hat, ist –",
+      "Eine Art, wie sich mein kindliches Ich für meine Ablehnung rächt, ist –",
+      "Eine Art, wie sich mein jugendlicher Anteil für meine Ablehnung rächt, ist –"
+    ]
+  },
+  {
+    theme: "Verbindung herstellen",
+    stems: [
+      "Bei dem Gedanken, meinem kindlichen Ich zu geben, was es von mir braucht –",
+      "Bei dem Gedanken, meinem jugendlichen Anteil zu geben, was er von mir braucht –",
+      "Wenn mein kindliches Ich und ich uns ineinander verlieben würden –",
+      "Wenn mein jugendlicher Anteil und ich uns ineinander verlieben würden –"
+    ]
+  },
+  {
+    theme: "Vertrauen aufbauen",
+    stems: [
+      "Wenn ich akzeptiere, dass mein kindliches Ich Zeit brauchen kann, mir zu vertrauen –",
+      "Wenn ich akzeptiere, dass mein jugendlicher Anteil Zeit brauchen kann, mir zu vertrauen –",
+      "Während ich verstehe, dass mein kindlicher und jugendlicher Anteil beide Teil von mir sind –",
+      "Mir wird bewusst –"
+    ]
+  },
+  {
+    theme: "Schwierige Gefühle",
+    stems: [
+      "Manchmal, wenn ich Angst habe, –",
+      "Manchmal, wenn ich verletzt bin, –",
+      "Manchmal, wenn ich wütend bin, –",
+      "Eine wirksame Art, mit Angst umzugehen, könnte sein –",
+      "Eine wirksame Art, mit Verletzung umzugehen, könnte sein –",
+      "Eine wirksame Art, mit Wut umzugehen, könnte sein –"
+    ]
+  },
+  {
+    theme: "Positive Gefühle",
+    stems: [
+      "Manchmal, wenn ich aufgeregt bin, –",
+      "Manchmal, wenn ich sexuell erregt bin, –",
+      "Manchmal, wenn ich starke Gefühle erlebe, –",
+      "Wenn ich mit meiner Aufregung Freundschaft schließe –",
+      "Wenn ich mit meiner Sexualität Freundschaft schließe –",
+      "Während ich mit der ganzen Bandbreite meiner Emotionen vertrauter werde –"
+    ]
+  },
+  {
+    theme: "Sicherer Raum",
+    stems: [
+      "Wenn ich daran denke, ein besserer Freund für mein kindliches Ich zu werden –",
+      "Wenn ich daran denke, ein besserer Freund für meinen jugendlichen Anteil zu werden –",
+      "Während meine jüngeren Anteile sich bei mir wohler fühlen –",
+      "Während ich für mein kindliches Ich einen sicheren Raum schaffe –",
+      "Während ich für meinen jugendlichen Anteil einen sicheren Raum schaffe –"
+    ]
+  },
+  {
+    theme: "Elternstimmen",
+    stems: [
+      "Mutter gab mir ein Bild von mir als –",
+      "Vater gab mir ein Bild von mir als –",
+      "Mutter spricht durch meine Stimme, wenn ich mir sage –",
+      "Vater spricht durch meine Stimme, wenn ich mir sage –"
+    ]
+  },
+  {
+    theme: "Elternbeziehungen",
+    stems: [
+      "Wenn ich meiner Beziehung zu meiner Mutter 5 Prozent mehr Bewusstsein bringe –",
+      "Wenn ich meiner Beziehung zu meinem Vater 5 Prozent mehr Bewusstsein bringe –",
+      "Wenn ich meine Mutter und meinen Vater realistisch betrachte –",
+      "Wenn ich das Bewusstsein reflektiere, das ich in meine Beziehung zu meiner Mutter einbringe –",
+      "Wenn ich das Bewusstsein reflektiere, das ich in meine Beziehung zu meinem Vater einbringe –"
+    ]
+  },
+  {
+    theme: "Psychologische Freiheit",
+    stems: [
+      "Bei dem Gedanken, psychologisch frei von Mutter zu sein –",
+      "Bei dem Gedanken, psychologisch frei von Vater zu sein –",
+      "Bei dem Gedanken, mir selbst vollständig zu gehören –",
+      "Wenn mein Leben wirklich mir gehört –",
+      "Wenn ich wirklich fähig bin, selbstständig zu überleben –"
+    ]
+  },
+  {
+    theme: "Alle sechs Säulen",
+    stems: [
+      "Wenn ich 5 Prozent mehr Bewusstsein in mein Leben bringe –",
+      "Wenn ich 5 Prozent selbstakzeptierender bin –",
+      "Wenn ich 5 Prozent mehr Selbstverantwortung in mein Leben bringe –",
+      "Wenn ich 5 Prozent selbstbehauptender handele –",
+      "Wenn ich mein Leben 5 Prozent zielgerichteter lebe –",
+      "Wenn ich 5 Prozent mehr Integrität in mein Leben bringe –",
+      "Wenn ich tief atme und mir erlaube zu spüren, wie sich Selbstwert anfühlt –"
+    ]
+  }
+];
+
+var REFLECTION_STEM = "Wenn irgendetwas von dem, was ich diese Woche geschrieben habe, wahr ist, wäre es hilfreich, wenn ich –";
+
+var PILLARS = [
+  { name: "Bewusst leben", weeks: "Woche 1–4, 31" },
+  { name: "Selbstakzeptanz", weeks: "Woche 5–10, 31" },
+  { name: "Selbstverantwortung", weeks: "Woche 11–13, 31" },
+  { name: "Selbstbehauptung", weeks: "Woche 14–15, 31" },
+  { name: "Zielgerichtet leben", weeks: "Woche 16–17, 31" },
+  { name: "Integrität", weeks: "Woche 18–19, 31" }
+];
+
+// ==================== STATE ====================
+var state = {
+  currentWeek: 0,
+  currentDay: 0,
+  focusWeek: 0,
+  focusDay: 0,
+  focusStem: 0,
+  reflectWeek: 0,
+  darkMode: true,
+  accent: 'ghost'
+};
+
+var ACCENTS = [
+  {
+    id: 'ghost',
+    label: 'Ghost',
+    sub: 'Weiß auf Schwarz',
+    hex: '#FFFFFF',
+    rgb: '255,255,255',
+    card: 'linear-gradient(135deg,#1C1C1E,#2C2C2E)',
+    light: true
+  },
+  {
+    id: 'aurora',
+    label: 'Aurora',
+    sub: 'Nordlicht-Grün',
+    hex: '#00FF87',
+    rgb: '0,255,135',
+    card: 'linear-gradient(135deg,#0D2618,#0A1F10)',
+    light: false
+  },
+  {
+    id: 'neon',
+    label: 'Neon Violet',
+    sub: 'Electric Purple',
+    hex: '#C77DFF',
+    rgb: '199,125,255',
+    card: 'linear-gradient(135deg,#1A0A2E,#120520)',
+    light: false
+  },
+  {
+    id: 'sand',
+    label: 'Sand',
+    sub: 'Warm Minimal',
+    hex: '#E8D5B0',
+    rgb: '232,213,176',
+    card: 'linear-gradient(135deg,#2A2218,#1C160E)',
+    light: true
+  },
+  {
+    id: 'ice',
+    label: 'Ice Blue',
+    sub: 'Crisp & Clean',
+    hex: '#A8D8EA',
+    rgb: '168,216,234',
+    card: 'linear-gradient(135deg,#0A1A2E,#060F1C)',
+    light: true
+  },
+  {
+    id: 'ember',
+    label: 'Ember',
+    sub: 'Warm Orange',
+    hex: '#FF6B35',
+    rgb: '255,107,53',
+    card: 'linear-gradient(135deg,#2A0F05,#1A0802)',
+    light: false
+  },
+  {
+    id: 'rose',
+    label: 'Rose Gold',
+    sub: 'Soft Luxury',
+    hex: '#E8A598',
+    rgb: '232,165,152',
+    card: 'linear-gradient(135deg,#2A1510,#1C0D09)',
+    light: true
+  },
+  {
+    id: 'matrix',
+    label: 'Matrix',
+    sub: 'Terminal Green',
+    hex: '#39FF14',
+    rgb: '57,255,20',
+    card: 'linear-gradient(135deg,#001400,#000D00)',
+    light: false
+  }
+];
+
+function getAccent() {
+  var a = state.accent || 'green';
+  for (var i = 0; i < ACCENTS.length; i++) { if (ACCENTS[i].id === a) return ACCENTS[i]; }
+  return ACCENTS[0];
+}
+
+function applyAccent() {
+  var a = getAccent();
+  var r = a.rgb;
+  document.documentElement.style.setProperty('--accent', a.hex);
+  document.documentElement.style.setProperty('--accent-rgb', r);
+  document.documentElement.style.setProperty('--accent2',  'rgba(' + r + ',0.18)');
+  document.documentElement.style.setProperty('--accent-25','rgba(' + r + ',0.25)');
+  document.documentElement.style.setProperty('--accent-20','rgba(' + r + ',0.20)');
+  document.documentElement.style.setProperty('--accent-15','rgba(' + r + ',0.15)');
+  document.documentElement.style.setProperty('--accent-12','rgba(' + r + ',0.12)');
+  document.documentElement.style.setProperty('--accent-07','rgba(' + r + ',0.07)');
+}
+
+function loadData() {
+  try {
+    var s = localStorage.getItem('se_state');
+    if (s) {
+      var o = JSON.parse(s);
+      for (var k in o) state[k] = o[k];
+      // Migration: ensure accent is always set
+      if (!state.accent) state.accent = 'ghost';
+    }
+  } catch(e) {}
+}
+
+function saveState() {
+  try { localStorage.setItem('se_state', JSON.stringify(state)); } catch(e) {}
+}
+
+function getEntries(week, day, stem) {
+  var key = 'se_e_' + week + '_' + day + '_' + stem;
+  try { var v = localStorage.getItem(key); return v ? JSON.parse(v) : []; } catch(e) { return []; }
+}
+
+function saveEntries(week, day, stem, arr) {
+  var key = 'se_e_' + week + '_' + day + '_' + stem;
+  try { localStorage.setItem(key, JSON.stringify(arr)); } catch(e) {}
+}
+
+function getReflection(week) {
+  var key = 'se_r_' + week;
+  try { var v = localStorage.getItem(key); return v ? JSON.parse(v) : []; } catch(e) { return []; }
+}
+
+function saveReflection(week, arr) {
+  var key = 'se_r_' + week;
+  try { localStorage.setItem(key, JSON.stringify(arr)); } catch(e) {}
+}
+
+function isDayDone(week, day) {
+  var stems = WEEKS[week].stems;
+  for (var i = 0; i < stems.length; i++) {
+    if (getEntries(week, day, i).length >= 6) return true;
+  }
+  return false;
+}
+
+function allDaysDone(week) {
+  for (var d = 0; d < 5; d++) {
+    if (!isDayDone(week, d)) return false;
+  }
+  return true;
+}
+
+function isWeekDone(week) {
+  return allDaysDone(week) && getReflection(week).length >= 1;
+}
+
+function getTotalEntries(week) {
+  var total = 0;
+  for (var d = 0; d < 5; d++) {
+    for (var s = 0; s < WEEKS[week].stems.length; s++) {
+      total += getEntries(week, d, s).length;
+    }
+  }
+  total += getReflection(week).length;
+  return total;
+}
+
+function getDayEntryCount(week, day) {
+  var total = 0;
+  for (var s = 0; s < WEEKS[week].stems.length; s++) {
+    total += getEntries(week, day, s).length;
+  }
+  return total;
+}
+
+function checkAutoAdvance() {
+  // Check if current day is done -> advance day
+  if (isDayDone(state.currentWeek, state.currentDay)) {
+    if (state.currentDay < 4) {
+      state.currentDay++;
+      saveState();
+      return true;
+    }
+  }
+  return false;
+}
+
+function checkWeekDone() {
+  if (isWeekDone(state.currentWeek)) {
+    if (state.currentWeek < 30) {
+      state.currentWeek++;
+      state.currentDay = 0;
+      saveState();
+      return true;
+    }
+  }
+  return false;
+}
+
+// ==================== THEME ====================
+function applyTheme() {
+  if (state.darkMode) {
+    document.body.classList.remove('light-mode');
+  } else {
+    document.body.classList.add('light-mode');
+  }
+  applyAccent();
+}
+
+function toggleTheme() {
+  state.darkMode = !state.darkMode;
+  saveState();
+  applyTheme();
+}
+
+// ==================== NAV ====================
+var currentScreen = 'home';
+var screenStack = [];
+
+function navTo(screen) {
+  var old = document.getElementById('screen-' + currentScreen);
+  if (old) old.classList.remove('active');
+  currentScreen = screen;
+  screenStack = []; // clear sub-screen stack
+  var el = document.getElementById('screen-' + screen);
+  if (el) el.classList.add('active');
+  var items = document.querySelectorAll('.nav-item');
+  for (var i = 0; i < items.length; i++) {
+    items[i].classList.toggle('active', items[i].getAttribute('data-screen') === screen);
+  }
+  // Always show nav on main screens
+  var navEl = document.querySelector('.nav-bar');
+  if (navEl) navEl.classList.remove('hidden');
+  if (screen === 'home') renderHome();
+  if (screen === 'weeks') renderWeeks();
+  if (screen === 'guide') renderGuide();
+  if (screen === 'buch') renderBuch();
+}
+
+var NAV_SCREENS = ['home', 'weeks', 'guide', 'buch'];
+
+function pushScreen(screen) {
+  screenStack.push(currentScreen);
+  var old = document.getElementById('screen-' + currentScreen);
+  if (old) old.classList.remove('active');
+  currentScreen = screen;
+  var el = document.getElementById('screen-' + screen);
+  if (el) el.classList.add('active');
+  // Hide nav bar on sub-screens
+  var navEl = document.querySelector('.nav-bar');
+  if (navEl) {
+    var isNavScreen = false;
+    for (var ni = 0; ni < NAV_SCREENS.length; ni++) { if (NAV_SCREENS[ni] === screen) isNavScreen = true; }
+    navEl.classList.toggle('hidden', !isNavScreen);
+  }
+}
+
+function popScreen() {
+  var prev = screenStack.pop() || 'home';
+  var old = document.getElementById('screen-' + currentScreen);
+  if (old) old.classList.remove('active');
+  currentScreen = prev;
+  var el = document.getElementById('screen-' + prev);
+  if (el) el.classList.add('active');
+  // Show/hide nav bar
+  var navEl = document.querySelector('.nav-bar');
+  if (navEl) {
+    var isNavScreen = false;
+    for (var ni = 0; ni < NAV_SCREENS.length; ni++) { if (NAV_SCREENS[ni] === prev) isNavScreen = true; }
+    navEl.classList.toggle('hidden', !isNavScreen);
+  }
+  if (prev === 'home') renderHome();
+  if (prev === 'weeks') renderWeeks();
+  if (prev === 'detail') renderDetail(state.focusWeek);
+}
+
+// ==================== HOME ====================
+function renderHome() {
+  var w = state.currentWeek;
+  var d = state.currentDay;
+  var wk = WEEKS[w];
+  var totalDone = 0;
+  for (var i = 0; i < 31; i++) { if (isWeekDone(i)) totalDone++; }
+  var dayEntries = getDayEntryCount(w, d);
+  var maxEntries = wk.stems.length * 6;
+  var pct = Math.min(100, Math.round((dayEntries / maxEntries) * 100));
+
+  var dotsHtml = '';
+  for (var di = 0; di < 5; di++) {
+    var cls = isDayDone(w, di) ? 'done' : (di === d ? 'active' : '');
+    dotsHtml += '<div class="dot ' + cls + '"></div>';
+  }
+
+  var reflDone = getReflection(w).length >= 1;
+  var reflectHtml = '';
+  if (allDaysDone(w)) {
+    reflectHtml = '<div class="card" style="cursor:pointer;" onclick="openReflect(' + w + ')">' +
+      '<div style="display:flex;align-items:center;justify-content:space-between;">' +
+      '<div>' +
+      '<div style="font-size:11px;font-weight:700;color:var(--orange);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:4px;">Wochenende</div>' +
+      '<div style="font-size:15px;font-weight:600;">Wochenreflexion</div>' +
+      '<div style="font-size:12px;color:var(--text3);margin-top:2px;">' + getReflection(w).length + ' Einträge</div>' +
+      '</div>' +
+      '<div style="font-size:22px;">' + (reflDone ? '&#10004;' : '->') + '</div>' +
+      '</div></div>';
+  }
+
+  var html = '<div class="fade-in">';
+
+  // Tagesspruch
+  var q = getTodayQuote();
+  html += '<div style="margin:8px 16px 10px;padding:14px 16px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius);">';
+  html += '<div style="font-size:10px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:6px;">Satz des Tages · ' + esc(q.ch) + '</div>';
+  html += '<div style="font-size:14px;line-height:1.6;color:var(--text2);font-style:italic;">&bdquo;' + esc(q.text) + '&ldquo;</div>';
+  html += '</div>';
+
+  // Hero card
+  html += '<div class="card-hero" style="margin-top:12px;">';
+  html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">';
+  html += '<div>';
+  html += '<div class="badge badge-green" style="margin-bottom:8px;">Woche ' + (w+1) + ' · Tag ' + (d+1) + '</div>';
+  html += '<div style="font-size:22px;font-weight:700;line-height:1.3;">' + esc(wk.theme) + '</div>';
+  html += '</div>';
+  html += '<div style="text-align:center;">';
+  html += '<div style="font-size:32px;font-weight:800;color:var(--accent);">' + totalDone + '</div>';
+  html += '<div style="font-size:11px;color:var(--text3);">Wochen</div>';
+  html += '</div>';
+  html += '</div>';
+  html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">';
+  html += '<div style="font-size:13px;color:var(--text3);">Tagesfortschritt</div>';
+  html += '<div style="font-size:13px;color:var(--accent);font-weight:600;">' + dayEntries + ' Einträge</div>';
+  html += '</div>';
+  html += '<div class="progress-bar"><div class="progress-fill" style="width:' + pct + '%;"></div></div>';
+  html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-top:14px;">';
+  html += '<div class="dots">' + dotsHtml + '</div>';
+  html += '<button onclick="openFocus(' + w + ',' + d + ',0)" style="background:var(--accent);color:#000;border:none;border-radius:12px;padding:10px 20px;font-size:14px;font-weight:700;cursor:pointer;">Jetzt starten &#10095;</button>';
+  html += '</div>';
+  html += '</div>';
+
+  // Stats
+  html += '<div class="stats-row">';
+  html += '<div class="stat-card"><div class="stat-num">' + (w+1) + '</div><div class="stat-label">Aktuelle Woche</div></div>';
+  html += '<div class="stat-card"><div class="stat-num">' + (d+1) + '</div><div class="stat-label">Aktueller Tag</div></div>';
+  html += '<div class="stat-card"><div class="stat-num">' + totalDone + '</div><div class="stat-label">Abgeschlossen</div></div>';
+  html += '</div>';
+
+  // Micro-Challenge
+  var challenge = getTodayChallenge();
+  var challenged = isChallengeChecked();
+  html += '<div class="section-title">Tages-Challenge</div>';
+  html += '<div class="card" style="cursor:pointer;" onclick="toggleChallenge()">';
+  html += '<div style="display:flex;align-items:flex-start;gap:12px;">';
+  html += '<div style="width:28px;height:28px;border-radius:50%;border:2px solid ' + (challenged ? 'var(--accent)' : 'var(--card3)') + ';background:' + (challenged ? 'var(--accent)' : 'transparent') + ';display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px;font-size:14px;color:' + (challenged ? '#000' : 'transparent') + ';">&#10003;</div>';
+  html += '<div style="flex:1;">';
+  html += '<div style="font-size:14px;line-height:1.6;color:' + (challenged ? 'var(--text3)' : 'var(--text)') + ';' + (challenged ? 'text-decoration:line-through;' : '') + '">' + esc(challenge) + '</div>';
+  html += '<div style="font-size:11px;color:var(--accent);margin-top:5px;font-weight:600;">' + (challenged ? '&#10003; Erledigt' : 'Antippen zum Abhaken') + '</div>';
+  html += '</div></div></div>';
+
+  // First stem preview
+  html += '<div class="section-title">Heutige Sätze</div>';
+  for (var si = 0; si < wk.stems.length; si++) {
+    var cnt = getEntries(w, d, si).length;
+    var ready = cnt >= 6;
+    html += '<div class="card" style="cursor:pointer;" onclick="openFocus(' + w + ',' + d + ',' + si + ')">';
+    html += '<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">';
+    html += '<div style="flex:1;min-width:0;">';
+    html += '<div style="font-size:15px;font-weight:500;line-height:1.5;color:' + (ready ? 'var(--accent)' : 'var(--text)') + ';">' + esc(wk.stems[si]) + '</div>';
+    html += '<div style="font-size:12px;color:' + (ready ? 'var(--accent)' : 'var(--text3)') + ';margin-top:4px;">' + cnt + '/6 Einträge' + (ready ? ' &#10003;' : '') + '</div>';
+    html += '</div>';
+    html += '<div class="check-circle ' + (ready ? 'done' : '') + '">' + (ready ? '&#10003;' : '') + '</div>';
+    html += '</div></div>';
+  }
+
+  html += reflectHtml;
+
+  // Export Entry Point on Home
+  var weekTotal = getTotalEntries(w);
+  if (weekTotal >= 3) {
+    html += '<div style="padding:0 16px 0;">';
+    html += '<div class="card" style="cursor:pointer;padding:12px 16px;" onclick="openExport(' + w + ')">';
+    html += '<div style="display:flex;align-items:center;gap:10px;">';
+    html += '<div style="font-size:22px;">&#11015;</div>';
+    html += '<div style="flex:1;"><div style="font-size:14px;font-weight:700;color:var(--accent);">Woche exportieren & analysieren</div>';
+    html += '<div style="font-size:12px;color:var(--text3);">' + weekTotal + ' Einträge – für Claude oder ChatGPT</div></div>';
+    html += '<div style="color:var(--text3);">&#8250;</div>';
+    html += '</div></div></div>';
+  }
+
+  // Alle Einträge Button
+  var grandTotal = 0;
+  for (var gi = 0; gi < 31; gi++) grandTotal += getTotalEntries(gi);
+  if (grandTotal > 0) {
+    html += '<div style="padding:0 16px 8px;">';
+    html += '<div class="card" style="cursor:pointer;display:flex;align-items:center;justify-content:space-between;" onclick="openEntriesOverview()">';
+    html += '<div style="display:flex;align-items:center;gap:10px;">';
+    html += '<div style="font-size:20px;">&#128221;</div>';
+    html += '<div><div style="font-size:15px;font-weight:600;">Alle Einträge</div><div style="font-size:12px;color:var(--text3);">' + grandTotal + ' Einträge über alle Wochen</div></div>';
+    html += '</div><div style="color:var(--text3);">&#8250;</div>';
+    html += '</div></div>';
+  }
+
+  html += '</div>';
+
+  document.getElementById('home-scroll').innerHTML = html;
+}
+
+// ==================== WEEK LIST ====================
+function renderWeeks() {
+  var html = '<div style="padding:8px 0;">';
+  for (var i = 0; i < 31; i++) {
+    var done = isWeekDone(i);
+    var isCurrent = i === state.currentWeek;
+    html += '<div class="week-item ' + (isCurrent ? 'current-week' : '') + '" onclick="openDetail(' + i + ')">';
+    html += '<div class="week-num ' + (done ? 'done' : '') + '">' + (done ? '&#10003;' : (i+1)) + '</div>';
+    html += '<div class="week-info">';
+    html += '<div class="week-name">' + esc(WEEKS[i].theme) + '</div>';
+    html += '<div class="week-sub">Woche ' + (i+1) + ' · ' + WEEKS[i].stems.length + ' Sätze · ' + getTotalEntries(i) + ' Einträge</div>';
+    html += '</div>';
+    if (done) {
+      html += '<div class="week-arrow" style="color:var(--accent);">&#10003;</div>';
+    } else {
+      html += '<div class="week-arrow">&#8250;</div>';
+    }
+    html += '</div>';
+  }
+  html += '</div>';
+  document.getElementById('weeks-scroll').innerHTML = html;
+}
+
+// ==================== DETAIL ====================
+function openDetail(w) {
+  state.focusWeek = w;
+  pushScreen('detail');
+  renderDetail(w);
+}
+
+function renderDetail(w) {
+  var wk = WEEKS[w];
+  var done = isWeekDone(w);
+  var isCurrent = w === state.currentWeek;
+
+  var html = '<div class="fade-in">';
+
+  // Hero
+  html += '<div class="card-hero' + (isCurrent ? '' : ' card-hero-blue') + '" style="margin-top:4px;">';
+  html += '<div class="badge ' + (done ? 'badge-green' : (isCurrent ? 'badge-green' : 'badge-gray')) + '" style="margin-bottom:10px;">Woche ' + (w+1) + (isCurrent ? ' · Aktuell' : (done ? ' · Abgeschlossen' : '')) + '</div>';
+  html += '<div style="font-size:26px;font-weight:800;margin-bottom:8px;">' + esc(wk.theme) + '</div>';
+  html += '<div style="font-size:13px;color:var(--text3);">' + getTotalEntries(w) + ' Einträge gesamt</div>';
+  html += '</div>';
+
+  // Day tabs + stems
+  html += '<div class="section-title" style="margin-top:4px;">Tage</div>';
+  for (var d = 0; d < 5; d++) {
+    var dayDone = isDayDone(w, d);
+    var isCurrentDay = w === state.currentWeek && d === state.currentDay;
+    html += '<div class="card" style="cursor:pointer;" onclick="openFocus(' + w + ',' + d + ',0)">';
+    html += '<div style="display:flex;align-items:center;justify-content:space-between;">';
+    html += '<div style="display:flex;align-items:center;gap:10px;">';
+    html += '<div class="check-circle ' + (dayDone ? 'done' : '') + '">' + (dayDone ? '&#10003;' : '') + '</div>';
+    html += '<div>';
+    html += '<div style="font-size:15px;font-weight:600;">Tag ' + (d+1) + (isCurrentDay ? ' <span style=\'color:var(--accent);font-size:12px;\'>&#9679; Aktiv</span>' : '') + '</div>';
+    html += '<div style="font-size:12px;color:var(--text3);margin-top:2px;">' + getDayEntryCount(w, d) + ' Einträge</div>';
+    html += '</div></div>';
+    html += '<div style="color:var(--text3);">&#8250;</div>';
+    html += '</div></div>';
+  }
+
+  // Reflection
+  var reflDone = getReflection(w).length >= 1;
+  var reflLocked = false;
+  html += '<div class="section-title">Wochenende</div>';
+  html += '<div class="card" style="cursor:pointer;" onclick="openReflect(' + w + ')">';
+  html += '<div style="display:flex;align-items:center;justify-content:space-between;">';
+  html += '<div style="display:flex;align-items:center;gap:10px;">';
+  html += '<div class="check-circle ' + (reflDone ? 'done' : '') + '">' + (reflDone ? '&#10003;' : '') + '</div>';
+  html += '<div>';
+  html += '<div style="font-size:15px;font-weight:600;">Wochenreflexion</div>';
+  html += '<div style="font-size:12px;color:var(--text3);margin-top:2px;">' + getReflection(w).length + ' Einträge</div>';
+  html += '</div></div>';
+  html += '<div style="color:var(--text3);">&#8250;</div>';
+  html += '</div></div>';
+
+  // Export Button
+  var weekTotal = getTotalEntries(w);
+  if (weekTotal >= 3) {
+    html += '<div class="section-title" style="margin-top:4px;">Export & Analyse</div>';
+    html += '<div class="card" style="cursor:pointer;" onclick="openExport(' + w + ')">';
+    html += '<div style="display:flex;align-items:center;gap:12px;">';
+    html += '<div style="font-size:24px;">&#11015;</div>';
+    html += '<div style="flex:1;">';
+    html += '<div style="font-size:15px;font-weight:700;color:var(--accent);">Woche exportieren & analysieren</div>';
+    html += '<div style="font-size:12px;color:var(--text3);margin-top:2px;">' + weekTotal + ' Einträge – für Claude oder ChatGPT</div>';
+    html += '</div><div style="color:var(--text3);">&#8250;</div>';
+    html += '</div></div>';
+  }
+
+  html += '</div>';
+  document.getElementById('detail-scroll').innerHTML = html;
+}
+
+// ==================== FOCUS ====================
+function openFocus(w, d, s) {
+  state.focusWeek = w;
+  state.focusDay = d;
+  state.focusStem = s;
+  pushScreen('focus');
+  renderFocus();
+}
+
+function renderFocus() {
+  var w = state.focusWeek;
+  var d = state.focusDay;
+  var s = state.focusStem;
+  var wk = WEEKS[w];
+
+  document.getElementById('focus-header-right').textContent = 'W' + (w+1) + ' · T' + (d+1);
+
+  // Stem info
+  var cnt = getEntries(w, d, s).length;
+  var ready = cnt >= 6;
+  var stemHtml = '<div class="stem-card active-stem">';
+  stemHtml += '<div class="stem-title">Aktueller Satz</div>';
+  stemHtml += '<div class="stem-text">' + esc(wk.stems[s]) + '</div>';
+  stemHtml += '<div class="stem-count ' + (ready ? 'ready' : '') + '">' + cnt + '/6 Einträge' + (ready ? ' &#10003; Fertig!' : ' – Noch ' + (6-cnt) + ' nötig') + '</div>';
+  stemHtml += '</div>';
+  document.getElementById('focus-stem-info').innerHTML = stemHtml;
+
+  // Day tabs
+  var dayHtml = '';
+  for (var di = 0; di < 5; di++) {
+    var dayDone = isDayDone(w, di);
+    dayHtml += '<div class="tab ' + (di === d ? 'active' : (dayDone ? 'done-tab' : '')) + '" onclick="switchFocusDay(' + di + ')">Tag ' + (di+1) + (dayDone && di !== d ? ' &#10003;' : '') + '</div>';
+  }
+  document.getElementById('focus-day-tabs').innerHTML = dayHtml;
+
+  // Stem tabs
+  var stemTabHtml = '';
+  for (var si = 0; si < wk.stems.length; si++) {
+    var sCnt = getEntries(w, d, si).length;
+    var sReady = sCnt >= 6;
+    stemTabHtml += '<div class="tab ' + (si === s ? 'active' : (sReady ? 'done-tab' : '')) + '" onclick="switchFocusStem(' + si + ')">S' + (si+1) + (sReady && si !== s ? '&#10003;' : '') + '</div>';
+  }
+  document.getElementById('focus-stem-tabs').innerHTML = stemTabHtml;
+
+  renderFocusEntries();
+}
+
+function renderFocusEntries() {
+  var w = state.focusWeek;
+  var d = state.focusDay;
+  var s = state.focusStem;
+  var entries = getEntries(w, d, s);
+
+  var html = '';
+  if (entries.length === 0) {
+    html = '<div class="empty-state"><div class="empty-icon"></div><div class="empty-text">Vervollständige den Satz mindestens 6 Mal.<br>Schreib spontan – ohne zu überlegen.</div></div>';
+  } else {
+    html = '<div style="padding:0 16px;">';
+    for (var i = entries.length - 1; i >= 0; i--) {
+      var idx = i;
+      html += '<div class="entry-item">';
+      html += '<div style="color:var(--text3);font-size:12px;padding-top:3px;min-width:20px;">' + (i+1) + '</div>';
+      html += '<div class="entry-text">' + esc(entries[i]) + '</div>';
+      html += '<button class="entry-del" onclick="delEntry(' + idx + ')">&#10005;</button>';
+      html += '</div>';
+    }
+    html += '</div>';
+  }
+  document.getElementById('focus-entries').innerHTML = html;
+  document.getElementById('focus-input').value = '';
+}
+
+function switchFocusDay(d) {
+  state.focusDay = d;
+  renderFocus();
+}
+
+function switchFocusStem(s) {
+  state.focusStem = s;
+  renderFocus();
+}
+
+function delEntry(idx) {
+  var w = state.focusWeek;
+  var d = state.focusDay;
+  var s = state.focusStem;
+  var entries = getEntries(w, d, s);
+  entries.splice(idx, 1);
+  saveEntries(w, d, s, entries);
+  renderFocus();
+}
+
+function addFocusEntry() {
+  var input = document.getElementById('focus-input');
+  var val = input.value.trim();
+  if (!val) return;
+  var w = state.focusWeek;
+  var d = state.focusDay;
+  var s = state.focusStem;
+  var entries = getEntries(w, d, s);
+  entries.push(val);
+  saveEntries(w, d, s, entries);
+  input.value = '';
+  input.style.height = '42px';
+  renderFocus();
+  if (entries.length === 6) showToast('&#10003; Satz ' + (s+1) + ' abgeschlossen!');
+}
+
+function closeFocus() {
+  var w = state.focusWeek;
+  var d = state.focusDay;
+  // Auto-advance if done
+  if (w === state.currentWeek && d === state.currentDay) {
+    if (isDayDone(w, d)) {
+      if (state.currentDay < 4) {
+        state.currentDay++;
+        saveState();
+        showToast('&#10003; Tag ' + d + ' fertig! Tag ' + (state.currentDay+1) + ' freigeschaltet.');
+      } else {
+        saveState();
+        showToast('&#10003; Alle 5 Tage abgeschlossen! Jetzt reflektieren.');
+      }
+    }
+  }
+  popScreen();
+}
+
+// ==================== REFLECTION ====================
+function openReflect(w) {
+  state.reflectWeek = w;
+  // Start on read tab if there are week entries to read, else go straight to write
+  var hasEntries = getTotalEntries(w) > 0;
+  reflectTab = hasEntries ? 'read' : 'write';
+  pushScreen('reflect');
+  renderReflect();
+}
+
+var reflectTab = 'read'; // 'read' | 'write'
+
+function switchReflectTab(tab) {
+  reflectTab = tab;
+  renderReflect();
+}
+
+function renderReflect() {
+  var w = state.reflectWeek;
+  document.getElementById('reflect-week-label').textContent = 'Woche ' + (w+1);
+
+  // Style tabs
+  var tabRead = document.getElementById('reflect-tab-read');
+  var tabWrite = document.getElementById('reflect-tab-write');
+  var panelRead = document.getElementById('reflect-panel-read');
+  var panelWrite = document.getElementById('reflect-panel-write');
+  if (!tabRead || !panelRead) return;
+
+  var isRead = reflectTab === 'read';
+  tabRead.style.background = isRead ? 'var(--accent)' : 'var(--card2)';
+  tabRead.style.color = isRead ? '#000' : 'var(--text2)';
+  tabWrite.style.background = !isRead ? 'var(--accent)' : 'var(--card2)';
+  tabWrite.style.color = !isRead ? '#000' : 'var(--text2)';
+  panelRead.style.display = isRead ? 'flex' : 'none';
+  panelWrite.style.display = !isRead ? 'flex' : 'none';
+
+  if (isRead) {
+    renderReflectReadPanel(w);
+  } else {
+    renderReflectWritePanel(w);
+  }
+}
+
+function renderReflectReadPanel(w) {
+  var wk = WEEKS[w];
+  var totalEntries = 0;
+  var html = '<div class="fade-in" style="padding-bottom:16px;">';
+
+  // Branden instruction
+  html += '<div style="margin:8px 16px 12px;padding:14px 16px;background:linear-gradient(135deg,rgba(255,159,10,0.12),rgba(255,159,10,0.04));border:1px solid rgba(255,159,10,0.25);border-radius:14px;">';
+  html += '<div style="font-size:11px;font-weight:700;color:var(--orange);text-transform:uppercase;letter-spacing:0.7px;margin-bottom:5px;">Brandons Methode</div>';
+  html += '<div style="font-size:13px;line-height:1.6;color:var(--text2);">Lies alle Einträge der Woche durch. Nimm dir Zeit. Dann wechsle zu <strong style="color:var(--text);">Reflektieren</strong>.</div>';
+  html += '</div>';
+
+  // All days
+  var hasAny = false;
+  for (var d = 0; d < 5; d++) {
+    var dayTotal = getDayEntryCount(w, d);
+    if (dayTotal === 0) continue;
+    hasAny = true;
+
+    html += '<div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.7px;padding:8px 20px 5px;">Tag ' + (d+1) + '</div>';
+    for (var s = 0; s < wk.stems.length; s++) {
+      var entries = getEntries(w, d, s);
+      if (entries.length === 0) continue;
+      totalEntries += entries.length;
+      html += '<div class="card" style="padding:0;margin-bottom:8px;">';
+      html += '<div style="padding:10px 14px 6px;font-size:12px;font-weight:600;color:var(--accent);line-height:1.4;">' + esc(wk.stems[s]) + '</div>';
+      for (var e = 0; e < entries.length; e++) {
+        html += '<div style="padding:6px 14px;font-size:14px;color:var(--text2);line-height:1.5;border-top:1px solid var(--border);">';
+        html += '<span style="color:var(--text3);font-size:11px;margin-right:6px;">' + (e+1) + '</span>' + esc(entries[e]);
+        html += '</div>';
+      }
+      html += '</div>';
+    }
+  }
+
+  // Weekend reflection entries if any
+  var reflEntries = getReflection(w);
+  if (reflEntries.length > 0) {
+    hasAny = true;
+    html += '<div style="font-size:11px;font-weight:700;color:var(--orange);text-transform:uppercase;letter-spacing:0.7px;padding:8px 20px 5px;">Reflexion</div>';
+    html += '<div class="card" style="padding:0;margin-bottom:8px;">';
+    for (var r = 0; r < reflEntries.length; r++) {
+      html += '<div style="padding:8px 14px;font-size:14px;color:var(--text2);line-height:1.5;' + (r > 0 ? 'border-top:1px solid var(--border);' : '') + '">';
+      html += '<span style="color:var(--text3);font-size:11px;margin-right:6px;">' + (r+1) + '</span>' + esc(reflEntries[r]);
+      html += '</div>';
+    }
+    html += '</div>';
+  }
+
+  if (!hasAny) {
+    html += '<div class="empty-state"><div class="empty-icon">&#9998;</div><div class="empty-text">Noch keine Einträge diese Woche.<br>Schreibe zuerst im Fokus-Modus.</div></div>';
+  } else {
+    // CTA to switch to write
+    html += '<div style="padding:0 16px 8px;">';
+    html += '<button onclick="switchReflectTab(\'write\')" style="width:100%;background:var(--accent);color:#000;border:none;border-radius:14px;padding:14px;font-size:15px;font-weight:700;cursor:pointer;">Jetzt reflektieren &#8250;</button>';
+    html += '</div>';
+  }
+
+  html += '</div>';
+  document.getElementById('reflect-panel-read').innerHTML = html;
+}
+
+function renderReflectWritePanel(w) {
+  document.getElementById('reflect-stem-text').textContent = REFLECTION_STEM;
+  var entries = getReflection(w);
+  document.getElementById('reflect-count').textContent = entries.length + ' Einträge';
+
+  var html = '';
+  if (entries.length === 0) {
+    html = '<div class="empty-state" style="padding:24px 20px;"><div class="empty-icon">&#128221;</div><div class="empty-text">Vervollständige den Reflexionssatz<br>mindestens 6 Mal.</div></div>';
+  } else {
+    html = '<div style="padding:0 16px;">';
+    for (var i = entries.length - 1; i >= 0; i--) {
+      var idx = i;
+      html += '<div class="entry-item">';
+      html += '<div style="color:var(--text3);font-size:12px;padding-top:3px;min-width:20px;">' + (i+1) + '</div>';
+      html += '<div class="entry-text">' + esc(entries[i]) + '</div>';
+      html += '<button class="entry-del" onclick="delReflection(' + idx + ')">&#10005;</button>';
+      html += '</div>';
+    }
+    html += '</div>';
+  }
+  document.getElementById('reflect-entries').innerHTML = html;
+  document.getElementById('reflect-input').value = '';
+}
+
+function delReflection(idx) {
+  var w = state.reflectWeek;
+  var entries = getReflection(w);
+  entries.splice(idx, 1);
+  saveReflection(w, entries);
+  renderReflect();
+}
+
+function addReflectionEntry() {
+  var input = document.getElementById('reflect-input');
+  var val = input.value.trim();
+  if (!val) return;
+  var w = state.reflectWeek;
+  var entries = getReflection(w);
+  entries.push(val);
+  saveReflection(w, entries);
+  input.value = '';
+  input.style.height = '42px';
+  renderReflectWritePanel(w);
+  // Check week done
+  if (w === state.currentWeek && isWeekDone(w)) {
+    if (state.currentWeek < 30) {
+      var old = state.currentWeek + 1;
+      state.currentWeek++;
+      state.currentDay = 0;
+      saveState();
+      showToast('&#127881; Woche ' + w + ' abgeschlossen! Woche ' + old + ' freigeschaltet!');
+    } else {
+      showToast('&#127881; Programm abgeschlossen! Herzlichen Glückwunsch!');
+    }
+  }
+  document.getElementById('reflect-count').textContent = entries.length + ' Einträge';
+}
+
+// ==================== GUIDE ====================
+function renderGuide() {
+  var html = '<div class="fade-in" style="padding-bottom:24px;">';
+
+  html += '<div class="card" style="margin-top:8px;background:linear-gradient(135deg,#1a1a2e,#0d0d1a);border-color:rgba(10,132,255,0.3);">';
+  html += '<div style="font-size:13px;font-weight:700;color:var(--blue);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:10px;">Brandons Schlüsselzitat</div>';
+  html += '<div style="font-size:16px;line-height:1.7;color:var(--text2);font-style:italic;">&ldquo;Das Niveau unseres Selbstwerts hat tiefgreifende Auswirkungen auf jeden Aspekt unserer Existenz.&rdquo;</div>';
+  html += '<div style="font-size:12px;color:var(--text3);margin-top:8px;">&#8212; Nathaniel Branden</div>';
+  html += '</div>';
+
+  html += '<div class="section-title" style="margin-top:16px;">Die Methode</div>';
+  html += '<div class="card">';
+  html += '<div style="font-size:15px;line-height:1.7;color:var(--text2);">';
+  html += 'Schreibe jeden Morgen (Mo&#8211;Fr) jeden Satzanfang 6&#8211;10 Mal zu Ende &#8211; so schnell wie möglich, ohne nachzudenken. Am Wochenende lese alles durch und reflektiere mit dem Reflexionssatz.';
+  html += '</div>';
+  html += '</div>';
+
+  html += '<div class="section-title" style="margin-top:16px;">Die 6 Säulen</div>';
+  html += '<div class="card">';
+  for (var i = 0; i < PILLARS.length; i++) {
+    html += '<div class="pillar-item">';
+    html += '<div class="pillar-num">' + (i+1) + '</div>';
+    html += '<div class="pillar-info">';
+    html += '<div class="pillar-name">' + esc(PILLARS[i].name) + '</div>';
+    html += '<div class="pillar-weeks">' + esc(PILLARS[i].weeks) + '</div>';
+    html += '</div></div>';
+  }
+  html += '</div>';
+
+  html += '<div class="section-title" style="margin-top:16px;">Die Spiegelübung</div>';
+  html += '<div class="card">';
+  html += '<div style="font-size:15px;line-height:1.7;color:var(--text2);">';
+  html += 'Schaue dir täglich in die Augen und sage: <strong style="color:var(--text);">&ldquo;Ich akzeptiere mich vollständig.&rdquo;</strong> Beobachte, was in dir aufsteigt &#8211; Widerstand, Emotionen, Gedanken. Urteile nicht darüber.';
+  html += '</div></div>';
+
+  html += '<div class="section-title" style="margin-top:16px;">Regeln</div>';
+  html += '<div class="card">';
+  var rules = [
+    'Niemals weniger als 6 Ergänzungen pro Satz',
+    'Nicht denken &#8211; Spontan schreiben',
+    'Jede Sitzung max. 10 Minuten',
+    'Ergänzungen müssen grammatikalisch passen',
+    'Auch erfundene Enden sind erlaubt',
+    'Muster über die Zeit beobachten'
+  ];
+  for (var ri = 0; ri < rules.length; ri++) {
+    html += '<div style="display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)' + (ri === rules.length-1 ? ';border:none' : '') + ';">';
+    html += '<div style="color:var(--accent);font-weight:700;flex-shrink:0;">' + (ri+1) + '.</div>';
+    html += '<div style="font-size:14px;color:var(--text2);line-height:1.5;">' + rules[ri] + '</div>';
+    html += '</div>';
+  }
+  html += '</div>';
+
+  // New sections — Spiegel + Sichtbarkeit
+  html += '<div class="section-title" style="margin-top:16px;">Kernpraktiken</div>';
+
+  html += '<div class="card" style="cursor:pointer;padding:16px;" onclick="openMirror()">';
+  html += '<div style="display:flex;align-items:center;gap:14px;">';
+  html += '<div style="width:44px;height:44px;border-radius:13px;background:var(--accent2);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">&#128444;</div>';
+  html += '<div style="flex:1;">';
+  html += '<div style="font-size:15px;font-weight:700;">Spiegel&#252;bung</div>';
+  html += '<div style="font-size:12px;color:var(--text3);margin-top:2px;">Brandons vollst&#228;ndiges Protokoll &#183; 2 Min. t&#228;glich</div>';
+  html += '</div><div style="color:var(--text3);">&#8250;</div>';
+  html += '</div></div>';
+
+  html += '<div class="card" style="cursor:pointer;padding:16px;" onclick="openVisibility()">';
+  html += '<div style="display:flex;align-items:center;gap:14px;">';
+  html += '<div style="width:44px;height:44px;border-radius:13px;background:var(--accent2);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">&#128065;</div>';
+  html += '<div style="flex:1;">';
+  html += '<div style="font-size:15px;font-weight:700;">Psychologische Sichtbarkeit</div>';
+  html += '<div style="font-size:12px;color:var(--text3);margin-top:2px;">Brandons tiefster Begriff &#183; Selbst&#252;bungen</div>';
+  html += '</div><div style="color:var(--text3);">&#8250;</div>';
+  html += '</div></div>';
+
+  html += '</div>';
+  document.getElementById('guide-scroll').innerHTML = html;
+}
+
+// ==================== UTILS ====================
+function esc(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function showToast(msg) {
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(function() { t.classList.remove('show'); }, 2800);
+}
+
+// ==================== EVENTS ====================
+document.getElementById('detail-back').addEventListener('click', function() { popScreen(); });
+document.getElementById('chapter-back').addEventListener('click', function() { popScreen(); });
+document.getElementById('entries-back').addEventListener('click', function() { popScreen(); renderHome(); });
+document.getElementById('export-back').addEventListener('click', function() { popScreen(); });
+document.getElementById('mirror-back').addEventListener('click', function() { popScreen(); });
+document.getElementById('visibility-back').addEventListener('click', function() { popScreen(); });
+document.getElementById('focus-back').addEventListener('click', function() { closeFocus(); });
+document.getElementById('reflect-back').addEventListener('click', function() { popScreen(); renderHome(); });
+
+document.getElementById('focus-send').addEventListener('click', addFocusEntry);
+document.getElementById('reflect-send').addEventListener('click', addReflectionEntry);
+
+document.getElementById('focus-input').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); addFocusEntry(); }
+});
+document.getElementById('reflect-input').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); addReflectionEntry(); }
+});
+
+// Auto-resize textareas
+function autoResize(ta) {
+  ta.style.height = '42px';
+  ta.style.height = Math.min(ta.scrollHeight, 120) + 'px';
+}
+document.getElementById('focus-input').addEventListener('input', function() { autoResize(this); });
+document.getElementById('reflect-input').addEventListener('input', function() { autoResize(this); });
+
+// Icon buttons open the appearance panel
+var themeIdsOld = ['theme-toggle','theme-toggle2','theme-toggle3','theme-toggle4','theme-toggle5'];
+for (var tio = 0; tio < themeIdsOld.length; tio++) {
+  (function(id) {
+    document.getElementById(id).addEventListener('click', openAccentModal);
+  })(themeIdsOld[tio]);
+}
+
+// ==================== ACCENT PICKER ====================
+function renderAccentSwatches() {
+  var html = '<div class="theme-grid">';
+  for (var i = 0; i < ACCENTS.length; i++) {
+    var a = ACCENTS[i];
+    var sel = a.id === state.accent;
+    html += '<div class="theme-card' + (sel ? ' selected' : '') + '" ';
+    html += 'style="background:' + a.card + ';" ';
+    html += 'onclick="selectAccent(\'' + a.id + '\')">';
+    html += '<div style="position:absolute;top:12px;left:12px;width:12px;height:12px;border-radius:50%;background:' + a.hex + ';box-shadow:0 0 8px ' + a.hex + ';"></div>';
+    html += '<div class="theme-label">' + a.label + '</div>';
+    html += '<div class="theme-sub">' + a.sub + '</div>';
+    html += '</div>';
+  }
+  html += '</div>';
+  document.getElementById('accent-swatches').innerHTML = html;
+}
+function selectAccent(id) {
+  state.accent = id;
+  saveState();
+  applyAccent();
+  renderAccentSwatches();
+}
+
+function openAccentModal() {
+  renderAccentSwatches();
+  var dmBtn = document.getElementById('dark-mode-toggle');
+  if (dmBtn) dmBtn.innerHTML = state.darkMode ? '&#9680;' : '&#9728;';
+  document.getElementById('accent-modal').classList.add('open');
+}
+
+document.getElementById('accent-close').addEventListener('click', function() {
+  document.getElementById('accent-modal').classList.remove('open');
+});
+document.getElementById('dark-mode-toggle').addEventListener('click', function() {
+  state.darkMode = !state.darkMode;
+  saveState();
+  applyTheme();
+  this.innerHTML = state.darkMode ? '&#9680;' : '&#9728;';
+});
+document.getElementById('accent-modal').addEventListener('click', function(e) {
+  if (e.target === this) this.classList.remove('open');
+});
+
+// Wire all theme toggle buttons to open accent picker instead
+var themeIdsFull = ['theme-toggle','theme-toggle2','theme-toggle3','theme-toggle4','theme-toggle5'];
+for (var tif = 0; tif < themeIdsFull.length; tif++) {
+  document.getElementById(themeIdsFull[tif]).innerHTML = '&#9881;';
+  document.getElementById(themeIdsFull[tif]).title = 'Farbe & Modus';
+}
+
+
+// ==================== BUCH DATA ====================
+var CHAPTERS = [
+  {
+    part: null,
+    label: "Einführung",
+    title: "Einleitung",
+    subtitle: "Warum Selbstwert das Thema unserer Zeit ist",
+    icon: "&#9733;",
+    summary: "Branden erklärt sein Ziel: die wichtigsten Faktoren zu identifizieren, von denen Selbstwert abhängt. Er beschreibt Selbstwert als \"die Gesundheit des Geistes\" – ein fundamentales menschliches Bedürfnis, das unser Leben durchdringt, ob wir es verstehen oder nicht. In einer Zeit rasanter Veränderungen und kultureller Orientierungslosigkeit sei innere Stabilität überlebenswichtig. Das Buch beantwortet vier Fragen: Was ist Selbstwert? Warum ist er wichtig? Wie kann man ihn stärken? Welche Rolle spielen andere dabei? Selbstwert entsteht aus inneren Faktoren (eigene Handlungen, Überzeugungen) und äußeren Faktoren (Familie, Schule, Kultur). Das Buch ist ein Aufruf zum Handeln: Ein Selbst soll verwirklicht werden – nicht aufgegeben.",
+    keypoints: [
+      "Selbstwert ist das Immunsystem des Geistes",
+      "Innere und äußere Faktoren formen den Selbstwert",
+      "Das Buch beantwortet: Was ist SE? Warum wichtig? Wie stärken? Rolle anderer?",
+      "Ein Aufruf zur aktiven Selbstentwicklung"
+    ],
+    quote: "Wer das Leben mit niedrigem Selbstwert konfrontiert, ist ernsthaft benachteiligt."
+  },
+  {
+    part: "Teil I: Grundprinzipien",
+    label: "Kapitel 1",
+    title: "Das Immunsystem des Bewusstseins",
+    subtitle: "Die Unausweichlichkeit von Selbstwert",
+    icon: "1",
+    summary: "Selbstwert ist eine fundamentale menschliche Realität, die wir weder ignorieren noch umgehen können. Branden definiert ihn als Erfahrung, dem Leben gewachsen zu sein: Vertrauen in die eigene Denkfähigkeit (Selbstwirksamkeit) und das Gefühl, Glück und Erfolg zu verdienen (Selbstachtung). Selbstwert beeinflusst jeden Bereich des Lebens – wie wir denken, fühlen, arbeiten, lieben. Niederer Selbstwert erzeugt ein Muster: Irrationale Überzeugungen, Angst vor Herausforderungen, defensives Verhalten. Hoher Selbstwert ermöglicht Resilienz, Neugier und echte Verbindung zu anderen. In der modernen Welt mit ihren zahllosen Wahlmöglichkeiten ist Selbstwert wichtiger denn je – ohne ihn wird die Freiheit zur Last.",
+    keypoints: [
+      "Selbstwert = Selbstwirksamkeit + Selbstachtung",
+      "Er wirkt mit oder ohne unser Wissen auf unser Leben",
+      "Niedriger SE erzeugt Angst, Defensivität, Stagnation",
+      "In einer Welt voller Optionen ist SE eine Überlebensfähigkeit"
+    ],
+    quote: "Selbstwert ist ein fundamentales menschliches Bedürfnis. Seine Auswirkungen erfordern weder unser Verstehen noch unsere Zustimmung."
+  },
+  {
+    part: null,
+    label: "Kapitel 2",
+    title: "Die Bedeutung von Selbstwert",
+    subtitle: "Selbstwirksamkeit und Selbstachtung",
+    icon: "2",
+    summary: "Branden analysiert die zwei Kernkomponenten des Selbstwerts. Selbstwirksamkeit ist das Vertrauen in die eigene Denkfähigkeit: lernen, wählen, entscheiden, mit Realität umgehen. Selbstachtung ist die Überzeugung, Glück und Erfolg zu verdienen – das Gefühl, dass Freude mein natürliches Geburtsrecht ist. Beide Komponenten sind untrennbar verbunden: Wer denkt, er sei unfähig, verliert auch das Gefühl der Würde. Wer sich unwürdig fühlt, blockiert seine eigene Intelligenz. Pseudo-Selbstwert – aufgeblasenes Ego, Arroganz, Geltungssucht – ist ein Abwehrmechanismus gegen das Gefühl der Unzulänglichkeit. Echter Selbstwert ist nicht Größenwahn, sondern ruhige innere Sicherheit. Er entsteht nicht durch äußere Erfolge, sondern durch die Art, wie wir unser Leben führen.",
+    keypoints: [
+      "Selbstwirksamkeit = Vertrauen ins eigene Denken",
+      "Selbstachtung = Gefühl, Glück zu verdienen",
+      "Pseudo-Selbstwert ist ein Abwehrmechanismus",
+      "Echter SE entsteht durch die Art zu leben, nicht durch Erfolge"
+    ],
+    quote: "Selbstachtung bedeutet, dass Freude und Erfüllung mein natürliches Geburtsrecht sind."
+  },
+  {
+    part: null,
+    label: "Kapitel 3",
+    title: "Das Gesicht des Selbstwerts",
+    subtitle: "Wie hoher Selbstwert sich im Alltag zeigt",
+    icon: "3",
+    summary: "Hoher Selbstwert ist keine abstrakte Theorie – er zeigt sich konkret im Verhalten. Branden beschreibt das Erscheinungsbild: Ein Mensch mit echtem Selbstwert trägt seine Haltung mit Leichtigkeit, spricht direkt über Stärken und Schwächen, nimmt Kritik ohne Zusammenbruch entgegen, lebt in Harmonie zwischen Worten und Taten. Er ist neugierig auf neue Ideen, zeigt echte Wärme gegenüber anderen und braucht keine Zustimmung, um sicher zu sein. Er kooperiert nicht aus Angst, sondern aus wirklichem Interesse. Empathie, Mitgefühl und Güte kommen natürlich – nicht erzwungen. Besonders wichtig: Meine Beziehung zu anderen spiegelt meine Beziehung zu mir selbst. Wer sich selbst hasst, hasst andere. Wer sich liebt, kann wirklich lieben.",
+    keypoints: [
+      "SE zeigt sich in Körpersprache, Direktheit, Leichtigkeit",
+      "Kritik annehmen ohne Selbstbild zu verlieren",
+      "Empathie und Kooperation entstehen natürlich aus hohem SE",
+      "Die Beziehung zu anderen spiegelt die Beziehung zu sich selbst"
+    ],
+    quote: "Wie ich zu anderen stehe, spiegelt und reflektiert, wie ich zu mir selbst stehe."
+  },
+  {
+    part: null,
+    label: "Kapitel 4",
+    title: "Die Illusion von Selbstwert",
+    subtitle: "Pseudo-Selbstwert und seine Fallen",
+    icon: "4",
+    summary: "Niedriger Selbstwert erzeugt Angst – und Angst erzeugt Abwehrmechanismen, die wie Selbstwert aussehen, aber keiner sind. Branden analysiert diese Illusionen: Konformismus (Anpassung an Gruppen, um Sicherheit zu finden), Rebellion (reflexartiger Widerstand als Pseudo-Unabhängigkeit), Größenwahn (Kompensation für tiefe Unzulänglichkeit), Narzissmus (Selbstbezogenheit aus Hunger nach Bestätigung). Diese Masken kosten enorm – sie binden Energie, die für echtes Leben gebraucht würde. Echtes Genie und echte Kreativität erfordern Mut, Unabhängigkeit und Nerve: die Bereitschaft, allein zu stehen. Das ist es, was Selbstwert letztlich verlangt – und was falsche Strategien nie leisten können.",
+    keypoints: [
+      "Niederer SE führt zu Abwehrmechanismen statt echtem SE",
+      "Konformismus, Rebellion, Größenwahn als Pseudo-SE",
+      "Diese Masken kosten Energie und blockieren echtes Leben",
+      "Echte Kreativität erfordert Mut zur Unabhängigkeit"
+    ],
+    quote: "Genie hat viel mit Unabhängigkeit, Mut und Kühnheit zu tun – mit Nerv."
+  },
+  {
+    part: "Teil II: Innere Quellen",
+    label: "Kapitel 5",
+    title: "Der Fokus auf Handlung",
+    subtitle: "Was du tust, formt wer du bist",
+    icon: "5",
+    summary: "Branden beginnt nicht mit der Umwelt, sondern mit dem Individuum. Die entscheidende Frage: Was muss ein Mensch tun, um Selbstwert zu erzeugen und aufrechtzuerhalten? Erst wenn wir wissen, wie psychologisch gesundes Erwachsensein aussieht, können wir beurteilen, was hilfreiche oder schädliche Kindheitserfahrungen sind. Die Antwort liegt in sechs konkreten Praktiken – keine abstrakten Tugenden, sondern täglich ausführbare Handlungen. Kleine Verbesserungen machen einen Unterschied. Branden ermutigt, in kleinen Schritten zu denken: Ein kleiner Schritt führt zum nächsten. Die sechs Säulen sind kein unerreichbares Ideal, sondern ein Kompass für jeden Tag.",
+    keypoints: [
+      "Selbstwert entsteht durch konkretes Handeln, nicht durch Wünschen",
+      "Kleine Verbesserungen haben außerordentliche Wirkung",
+      "Die sechs Säulen sind täglich ausführbare Praktiken",
+      "Erst Klarheit über gesundes Erwachsensein ermöglicht richtiges Erziehen"
+    ],
+    quote: "Ich ermutige Klienten, in kleinen Schritten zu denken – ein kleiner Schritt führt zum nächsten."
+  },
+  {
+    part: null,
+    label: "Kapitel 6",
+    title: "Bewusst leben",
+    subtitle: "Die erste Säule – Geistige Wachheit als Lebensweise",
+    icon: "&#9312;",
+    summary: "Bewusstsein ist das grundlegende Überlebenswerkzeug des Menschen. Bewusst zu leben bedeutet: mit der Realität in Kontakt sein, die eigenen Handlungen, Motive und Emotionen verstehen, sich nicht in Selbsttäuschung flüchten. Das Gegenteil ist nicht Dummheit, sondern Trägheit des Geistes – die Wahl, nicht zu denken. Branden zeigt: Jede Selbsttäuschung hat einen Preis. Wer relevante Fakten ignoriert, schwächt sein Urteilsvermögen und seine Selbstwirksamkeit. Bewusstsein bedeutet nicht Allwissenheit, sondern die Bereitschaft, immer tiefer zu schauen. Das gilt bei der Arbeit, in Beziehungen, beim Umgang mit sich selbst. Die Praxis: jeden Tag 5% bewusster sein als gestern. Ein Geist, der sich verrät, schwächt den Selbstwert.",
+    keypoints: [
+      "Bewusstsein ist das Überlebenswerkzeug des Menschen",
+      "Jede Selbsttäuschung schwächt Selbstwirksamkeit",
+      "Bewusst leben = Realität nicht ausweichen, auch wenn sie unbequem ist",
+      "Täglich 5% bewusster – kleine Schritte, große Wirkung"
+    ],
+    quote: "Unser Geist ist unser grundlegendes Überlebenswerkzeug. Verrate ihn, und der Selbstwert leidet."
+  },
+  {
+    part: null,
+    label: "Kapitel 7",
+    title: "Selbstakzeptanz",
+    subtitle: "Die zweite Säule – Sich selbst nicht zum Feind werden",
+    icon: "&#9313;",
+    summary: "Ohne Selbstakzeptanz ist Selbstwert unmöglich. Selbstakzeptanz ist nicht Selbstgefälligkeit oder Zustimmung zu allem, was man tut – es ist die Weigerung, in adversarieller Beziehung zu sich selbst zu stehen. Branden beschreibt drei Ebenen: die Basisorientierung (Ich wähle, mich zu wertschätzen), das Annehmen aller Seiten (Stärken, Schwächen, Emotionen, Gedanken, Körper) und die Mitgefühl-Ebene (sich selbst mit der Güte begegnen, die man einem guten Freund zeigen würde). Wir können nicht nur unsere dunkle Seite ablehnen – oft fliehen wir vor unserer hellen Seite, vor Genialität, Stärke, Schönheit, weil sie Verantwortung bedeuten. Das größte Verbrechen an uns selbst: unsere Größe verleugnen, weil sie uns ängstigt.",
+    keypoints: [
+      "Selbstakzeptanz ist keine Zustimmung, sondern Nicht-Feindschaft zu sich selbst",
+      "Drei Ebenen: Basiswertschätzung, Annehmen aller Anteile, Selbstmitgefühl",
+      "Wir fliehen nicht nur vor Schwächen, sondern auch vor unserer Stärke",
+      "Sich selbst nicht annehmen verhindert jede echte Veränderung"
+    ],
+    quote: "Das größte Verbrechen an uns selbst: nicht unsere Fehler verleugnen, sondern unsere Größe – weil sie uns ängstigt."
+  },
+  {
+    part: null,
+    label: "Kapitel 8",
+    title: "Selbstverantwortung",
+    subtitle: "Die dritte Säule – Niemand kommt, um mich zu retten",
+    icon: "&#9314;",
+    summary: "Um mich dem Leben gewachsen zu fühlen, brauche ich das Gefühl von Kontrolle über meine Existenz. Das erfordert Selbstverantwortung: Ich bin verantwortlich für meine Wünsche, Entscheidungen, Handlungen, Beziehungen, mein Glück, mein Bewusstsein, meinen Selbstwert. Niemand schuldet mir die Erfüllung meiner Wünsche. Die entscheidende therapeutische Erkenntnis: Niemand kommt. Kein Retter wird mein Leben richten. Wenn ich nicht handle, wird sich nichts verbessern. Der Traum vom Retter lässt uns passiv – er ist selbst bezahlt mit verlorenem Leben. Selbstverantwortung ist das Gegenteil von Schuldzuweisung: Ich bin der Autor meines Lebens, nicht das Opfer der Umstände.",
+    keypoints: [
+      "Selbstverantwortung = Ich bin Autor meines Lebens",
+      "Niemand schuldet mir die Erfüllung meiner Wünsche",
+      "\"Niemand kommt\" – der zentrale therapeutische Wendepunkt",
+      "Schuldzuweisung ist die Feindseligkeit von Selbstverantwortung"
+    ],
+    quote: "Niemand kommt. Kein Retter wird mein Leben richten. Wenn ich nichts tue, wird sich nichts verbessern."
+  },
+  {
+    part: null,
+    label: "Kapitel 9",
+    title: "Selbstbehauptung",
+    subtitle: "Die vierte Säule – Das Recht zu existieren beanspruchen",
+    icon: "&#9315;",
+    summary: "Selbstbehauptung bedeutet: zu meiner eigenen Wahrheit stehen, meine Gedanken und Gefühle respektieren, meine Bedürfnisse ehrlich kommunizieren – auch wenn andere es unbequem finden. Branden zeigt mit einem Experiment: Die meisten Menschen können leicht sagen, 2+2=4, aber kämpfen mit dem Satz \"Ich habe ein Recht zu existieren\". Das verrät, wie tief die Angst vor dem eigenen Dasein sitzt. Selbstbehauptung ist nicht Aggression oder Egoismus – es ist Authentizität. Es bedeutet, ja zu sagen wenn man ja meint, nein wenn man nein meint. Die Musik in mir – meine tiefsten Gedanken, Werte, Träume – nicht zu verstecken. Selbstbehauptung erfordert Mut; aber dieser Mut ist auch der Weg, durch den Selbstwert entsteht.",
+    keypoints: [
+      "Die meisten Menschen fürchten tief, das Recht zu existieren einzufordern",
+      "Selbstbehauptung = Authentizität, nicht Aggression",
+      "Ja sagen wenn ja gemeint, nein wenn nein gemeint",
+      "Die eigene \"Musik\" nicht verstecken – das ist Selbstbehauptung"
+    ],
+    quote: "Es ist ein Fehler zu glauben: 'Es ist leicht für sie, selbstbehauptet zu sein – sie hat guten Selbstwert.' Selbstbehauptung baut Selbstwert."
+  },
+  {
+    part: null,
+    label: "Kapitel 10",
+    title: "Zielgerichtet leben",
+    subtitle: "Die fünfte Säule – Intention statt Drift",
+    icon: "&#9316;",
+    summary: "Ohne Ziel treibt man wie ein Korken auf dem Wasser – die Umstände entscheiden, nicht man selbst. Zielgerichtet zu leben bedeutet: die eigenen Kräfte auf bewusst gewählte Ziele ausrichten, Aktionspläne erstellen, Fortschritt überwachen, anpassen. Das gilt für Arbeit, Beziehungen, persönliche Entwicklung. Branden zeigt: Wer \"ich hoffe\" und \"ich wünsche\" sagt, wo er \"ich werde\" sagen sollte, lebt nicht zielgerichtet. Gleichzeitig bedeutet zielgerichtet leben, eigene Werte zu klären und nach ihnen zu handeln – nicht nach den Wünschen anderer. Der Unterschied zwischen impulsiver Güte und bewusster Güte: Beides kann schön sein, aber nur letzteres stärkt dauerhaft den Selbstwert.",
+    keypoints: [
+      "Ohne Ziel treibt man – Umstände statt eigener Wille bestimmen",
+      "\"Ich hoffe\" und \"ich wünsche\" ersetzen durch \"ich werde\"",
+      "Aktionspläne, Überwachung, Anpassung – das ist Zielgerichtetheit",
+      "Eigene Werte klären, nicht nach Erwartungen anderer leben"
+    ],
+    quote: "Ohne Ziel zu leben bedeutet, dem Zufall ausgeliefert zu sein – dem zufälligen Ereignis, dem zufälligen Anruf, der zufälligen Begegnung."
+  },
+  {
+    part: null,
+    label: "Kapitel 11",
+    title: "Persönliche Integrität",
+    subtitle: "Die sechste Säule – Worte und Verhalten in Einklang bringen",
+    icon: "&#9317;",
+    summary: "Integrität bedeutet Kongruenz: Ideale, Überzeugungen und Verhalten stimmen überein. Wenn ich gegen mein eigenes Urteil handle, verliere ich meinen Selbstrespekt. Integrität stellt einfache Fragen: Bin ich ehrlich? Halte ich meine Versprechen? Handle ich so, wie ich sage zu handeln? Branden betont: Integrität garantiert nicht das richtige Urteil, aber sie verlangt, dass wir aufrichtig nach dem besten Weg suchen. Wenn wir Fehler machen – und das werden wir – gibt es eine moralische Reparaturarbeit: den Schaden anerkennen, verstehen warum es passiert ist, Wiedergutmachung leisten, sich verpflichten, es besser zu machen. Die Säulen des Selbstwerts klingen wie ein Ethikkodex – weil sie es auch sind. Die Tugenden, die SE verlangt, sind die Tugenden, die das Leben verlangt.",
+    keypoints: [
+      "Integrität = Kongruenz zwischen Überzeugungen und Verhalten",
+      "Verstöße gegen eigene Werte schädigen das Selbstbild",
+      "Moralische Reparatur: Anerkennen, Verstehen, Wiedergutmachen",
+      "Die sechs Säulen sind auch ein Ethikkodex für das Leben"
+    ],
+    quote: "Wenn wir gegen unser eigenes Urteil handeln, verlieren wir das Gesicht in unseren eigenen Augen."
+  },
+  {
+    part: null,
+    label: "Kapitel 12",
+    title: "Die Philosophie des Selbstwerts",
+    subtitle: "Überzeugungen als Brücke zur Praxis",
+    icon: "12",
+    summary: "Nicht nur Handlungen, auch Überzeugungen prägen den Selbstwert. Was wir tief glauben, beeinflusst, was wir fühlen und tun. Branden unterscheidet zwischen Überzeugungen, die zu den sechs Praktiken hinführen, und solchen, die sie untergraben. Philosophische Grundlage: Das Leben jedes Menschen gehört ihm selbst – nicht der Gesellschaft, dem Staat oder einer Gruppe. Das Streben nach persönlichem Glück ist legitim und moralisch. Überzeugungen von Selbstlosigkeit, Sündhaftigkeit des Selbst oder Demut als höchster Tugend wirken wie ein Angriff auf den Selbstwert. Branden endet Teil II mit dem Übergang zu äußeren Faktoren: Wie beeinflussen andere – Eltern, Lehrer, Therapeuten, Kultur – unseren Selbstwert?",
+    keypoints: [
+      "Tiefe Überzeugungen, nicht nur Handlungen, formen SE",
+      "Das eigene Leben gehört einem selbst – das ist die philosophische Basis",
+      "Überzeugungen von Selbstlosigkeit als Pflicht untergraben SE",
+      "Übergang: Von inneren zu äußeren SE-Faktoren"
+    ],
+    quote: "Überzeugungen in einem Vakuum, losgelöst von Handlungen, bedeuten nichts. Aber da Überzeugungen Handlungen beeinflussen, müssen wir sie untersuchen."
+  },
+  {
+    part: "Teil III: Äußere Einflüsse",
+    label: "Kapitel 13",
+    title: "Selbstwert beim Kind",
+    subtitle: "Was Eltern wirklich vermitteln",
+    icon: "13",
+    summary: "Das Ziel guter Erziehung: ein Kind auf selbstständiges, selbstverantwortliches Erwachsensein vorzubereiten. Branden nennt die wichtigsten Praktiken: Das Kind bedingungslos annehmen (Liebe trennen von Zustimmung zum Verhalten), Grenzen mit Erklärungen setzen, Fehler ohne Beschämung behandeln, Selbstständigkeit fördern statt Gehorsam, authentisch selbst zu leben. Besonders wirkungsvoll: Kinder beobachten, wie Eltern mit dem eigenen Selbstwert umgehen. Selbstbehauptende Eltern erziehen selbstbehauptende Kinder – nicht durch Worte, sondern durch das Modell. Kinder brauchen sowohl Wurzeln (Sicherheit) als auch Flügel (Freiheit). Die eigene Selbstwertarbeit der Eltern ist der beste Beitrag zur Selbstwertentwicklung der Kinder.",
+    keypoints: [
+      "Ziel: unabhängiges, selbstverantwortliches Erwachsensein",
+      "Bedingungslose Annahme des Kindes – Liebe trennen vom Verhalten",
+      "Eltern als Modell: eigene SE-Arbeit ist der stärkste Einfluss",
+      "Wurzeln (Sicherheit) UND Flügel (Freiheit) sind beide nötig"
+    ],
+    quote: "In der Unterstützung und Förderung des Selbstwerts unserer Kinder unterstützen und fördern wir unseren eigenen."
+  },
+  {
+    part: null,
+    label: "Kapitel 14",
+    title: "Selbstwert in der Schule",
+    subtitle: "Lehrer als zweite Chance",
+    icon: "14",
+    summary: "Schule kann für Kinder eine \"zweite Chance\" sein – Lehrer können geben, was die Familie nicht geben konnte. Branden analysiert, was selbstwertfördernde Pädagogik ausmacht: Respektvoller Umgang, Vertrauen in die Fähigkeiten jedes Kindes, Fehler als Lernchance behandeln, Zusammenarbeit statt Konkurrenz betonen, Kinder zur aktiven Wissenssuche ermutigen. Lehrer mit niedrigem Selbstwert beschämen, demütigen und kontrollieren – und beschädigen dadurch die Kinder dauerhaft. Die wichtigste Erkenntnis: Ein Lehrer kann nur das vermitteln, was er selbst verkörpert. Wer SE in Schülern nähren will, muss zuerst an seinem eigenen arbeiten. Schule als pädagogischer Auftrag und als Weg zur persönlichen Entwicklung der Lehrenden.",
+    keypoints: [
+      "Schule als \"zweite Chance\" für Kinder aus schwierigen Familien",
+      "Respekt, Vertrauen, Fehlerkultur als SE-fördernde Praktiken",
+      "Lehrer mit niedrigem SE beschädigen Kinder dauerhaft",
+      "Man kann nur vermitteln, was man selbst verkörpert"
+    ],
+    quote: "Ein Lehrer, der einem Kind Vertrauen in seine Fähigkeiten entgegenbringt, kann ein starkes Gegenmittel gegen eine Familie sein, in der dieses Vertrauen fehlt."
+  },
+  {
+    part: null,
+    label: "Kapitel 15",
+    title: "Selbstwert und Arbeit",
+    subtitle: "Warum die Wirtschaft SE braucht",
+    icon: "15",
+    summary: "Die moderne Wissensökonomie verlangt selbstdenkende, selbstverantwortliche, kreative Menschen – und damit hohen Selbstwert. Branden analysiert: Unternehmen, die SE ihrer Mitarbeiter fördern, übertreffen solche, die Menschen als austauschbare Teile behandeln. Die Eigenschaften, die SE-förderliche Führung ausmacht: echte Delegation, konstruktives Feedback, Fehlerkultur, respektvoller Umgang, das Einbeziehen der Mitarbeiter in Entscheidungen. Für den Einzelnen: SE ermöglicht Kreativität, Risikobereitschaft und echte Leistung. Ohne SE fürchtet man Fehler, meidet Verantwortung, versteckt sich. Die wirtschaftliche und die persönliche Dimension sind untrennbar verbunden: Was den Menschen schadet, schadet dem Unternehmen.",
+    keypoints: [
+      "Wissensökonomie verlangt Menschen mit hohem Selbstwert",
+      "SE-fördernde Führung = Delegation, Respekt, Fehlerkultur",
+      "Niederer SE = Angst vor Fehlern, vermiedene Verantwortung",
+      "Was Menschen schadet, schadet dem Unternehmen"
+    ],
+    quote: "Die Richtlinien, die SE unterstützen, sind auch die, die Geld verdienen. Die, die SE beschädigen, lassen ein Unternehmen langfristig verlieren."
+  },
+  {
+    part: null,
+    label: "Kapitel 16",
+    title: "Selbstwert und Therapie",
+    subtitle: "Was gute Psychotherapie leistet",
+    icon: "16",
+    summary: "Seit den 1950ern, als Branden Psychotherapeut wurde, erkannte er: Niedriger Selbstwert ist der gemeinsame Nenner aller psychologischen Not. Er ist sowohl Ursache als auch Konsequenz. Branden entwickelte einen SE-fokussierten Therapieansatz mit zentralen Werkzeugen: Satzergänzungsarbeit (sentence completion), Arbeit mit inneren Anteilen, Spiegel-Übungen, das Wiederverbinden mit verdrängten Gefühlen und Fähigkeiten. Er kritisiert Ansätze, die SE nur als Nebenprodukt behandeln. Die Satzergänzungsarbeit ist besonders mächtig: Sie umgeht den rationalen Verstand und bringt unbewusste Überzeugungen ans Licht. Wichtige Fragen an einen Therapeuten: Was verstehen Sie unter Selbstwert? Was bewirkt unsere Zusammenarbeit konkret für meinen SE?",
+    keypoints: [
+      "Niedriger SE ist gemeinsamer Nenner aller psychologischen Not",
+      "Satzergänzungsarbeit als zentrales Werkzeug",
+      "SE muss explizites Ziel der Therapie sein, nicht Nebenprodukt",
+      "Wichtige Fragen an den Therapeuten stellen"
+    ],
+    quote: "Die Satzergänzungsarbeit umgeht den rationalen Verstand und bringt ans Licht, was wir tief glauben."
+  },
+  {
+    part: null,
+    label: "Kapitel 17",
+    title: "Selbstwert und Kultur",
+    subtitle: "Geschichte, Gesellschaft und das Selbst",
+    icon: "17",
+    summary: "Selbstwert als Konzept ist historisch jung und kulturell westlich. Im Mittelalter existierte das \"Selbst\" im heutigen Sinne kaum – Identität war kollektiv und gottgegeben. Die Aufklärung ermöglichte individuelles Selbstbewusstsein. Moderne Kulturen variieren stark: Kollektivistische Kulturen betonen Gruppenharmonie und Hierarchie – SE im westlichen Sinne wird dort oft als gefährlich erlebt. Branden zeigt: Kulturen, die Konformismus und Selbstverleugnung betonen, untergraben systematisch den Selbstwert ihrer Mitglieder. Echte SE ist nicht Egoismus – sie ist das Fundament echter Güte und echter Zivilisation. Das größte Missverständnis: \"Es ist leicht, selbstsüchtig zu sein, und Selbstlosigkeit erfordert Stärke.\" Die Wahrheit ist das Gegenteil.",
+    keypoints: [
+      "Selbstwert als Konzept ist historisch jung und kulturell bedingt",
+      "Kollektivistische Kulturen sehen individuellen SE oft als Bedrohung",
+      "Konformismus und Selbstverleugnung untergraben SE systematisch",
+      "Selbstsein zu ehren ist der ultimative Akt des Mutes"
+    ],
+    quote: "Das größte Missverständnis: Selbstlosigkeit erfordert Stärke. Die Wahrheit ist umgekehrt: Sich selbst zu ehren ist der ultimative Akt des Mutes."
+  },
+  {
+    part: null,
+    label: "Kapitel 18",
+    title: "Die siebte Säule",
+    subtitle: "Der Wille als Fundament aller Praktiken",
+    icon: "18",
+    summary: "Die sechs Praktiken erfordern immer einen Willen. Inertia, Angst, Schmerz, Einsamkeit – diese Widerstände können das Bewusstsein, die Selbstakzeptanz, die Verantwortung, Behauptung, Zielgerichtetheit und Integrität untergraben. Die siebte Säule ist die Energie, die alle anderen antreibt: die Liebe zum eigenen Leben. Nicht als romantische Idee, sondern als grundlegende Lebenskraft. Wer sein Leben liebt, hat die Motivation, die schwierigen Praktiken auch dann zu leben, wenn es nicht einfach ist. Branden schließt: Mut ist nötig. Ausdauer ist nötig. Aber die Energie dafür kommt nur aus der Liebe, die wir für unser eigenes Leben haben. Diese Liebe ist der Beginn der Tugend, die Startrampe für höchste Bestrebungen, die treibende Kraft der sechs Säulen.",
+    keypoints: [
+      "Alle sechs Praktiken erfordern Willen gegen Widerstand",
+      "Die siebte Säule ist die Liebe zum eigenen Leben",
+      "Mut, Ausdauer und Entschlossenheit kommen aus dieser Liebe",
+      "Die Liebe zum Leben ist der Beginn aller Tugend"
+    ],
+    quote: "Die Energie für dieses Engagement kann nur aus der Liebe kommen, die wir für unser eigenes Leben haben. Diese Liebe ist die siebte Säule."
+  }
+];
+
+
+// ==================== CHAPTER ACTIONS ====================
+var CHAPTER_ACTIONS = [
+  // Intro
+  [
+    { icon: "&#128221;", title: "Frage dich täglich", desc: "Welche Faktoren in meinem Leben stärken gerade meinen Selbstwert – und welche untergraben ihn?" },
+    { icon: "&#128270;", title: "Ehrliche Bestandsaufnahme", desc: "Schreibe auf, in welchen Lebensbereichen du dich kompetent fühlst und in welchen nicht. Unterscheide zwischen inneren und äußeren Einflüssen." },
+    { icon: "&#127981;", title: "Verantwortung annehmen", desc: "Identifiziere einen Bereich, in dem du dich als Opfer von Umständen fühlst. Was könntest du – unabhängig von anderen – selbst tun?" }
+  ],
+  // Kap 1
+  [
+    { icon: "&#128101;", title: "Selbstwert-Tagebuch beginnen", desc: "Schreibe jeden Abend drei Situationen auf, in denen du dich kompetent gefühlt hast. Baue darauf auf." },
+    { icon: "&#9888;", title: "Muster erkennen", desc: "Beobachte eine Woche lang: Wann vermeidest du Herausforderungen? Wann suchst du Zustimmung? Das sind Signale eines niedrigen SE." },
+    { icon: "&#127775;", title: "Einen Tag ohne Selbstsabotage", desc: "Setze dir das Ziel, heute nichts zu tun, was dein gutes Selbstgefühl untergräbt – keine Selbstkritik, keine unnötige Vermeidung." }
+  ],
+  // Kap 2
+  [
+    { icon: "&#129504;", title: "Selbstwirksamkeit testen", desc: "Nimm eine Aufgabe, die du schon lange aufgeschoben hast. Erledige sie. Beobachte, wie dein Vertrauen in die eigene Denkfähigkeit steigt." },
+    { icon: "&#10067;", title: "Wessen Ziele sind das?", desc: "Frage dich bei deinen wichtigsten aktuellen Zielen: Habe ich diese selbst gewählt – oder erfülle ich die Erwartungen anderer?" },
+    { icon: "&#128221;", title: "Satzergänzung: Selbstachtung", desc: "Schreibe 6 Enden für: 'Das Gefühl, Glück zu verdienen, bedeutet für mich …' Mach es morgens, spontan, ohne nachzudenken." }
+  ],
+  // Kap 3
+  [
+    { icon: "&#128064;", title: "Selbstbeobachtung eine Woche lang", desc: "Beobachte bei dir: Wie reagierst du auf Kritik? Wie auf Lob? Kannst du Fehler zugeben ohne dein Selbstbild zu verlieren?" },
+    { icon: "&#128172;", title: "Direktheit üben", desc: "Sage in drei Gesprächen heute direkt, was du denkst oder fühlst – ohne es vorher abzuschwächen oder zu verpacken." },
+    { icon: "&#128119;", title: "Spiegel-Übung", desc: "Schaue dir 60 Sekunden in die Augen und sage: 'Ich akzeptiere mich vollständig.' Beobachte, was in dir aufsteigt – urteile nicht darüber." }
+  ],
+  // Kap 4
+  [
+    { icon: "&#127917;", title: "Maske identifizieren", desc: "Frage dich: Welche Strategie nutze ich, um Unzulänglichkeit zu verbergen? Konformismus, Rebellion, Kontrolle, Perfektionismus?" },
+    { icon: "&#9999;", title: "Preis der Maske berechnen", desc: "Schreibe auf, wie viel Energie deine Abwehrstrategie kostet. Was könntest du mit dieser Energie stattdessen tun?" },
+    { icon: "&#128293;", title: "Mut zu einem kleinen Wagnis", desc: "Tue heute eine Sache, die echten Mut erfordert – nicht Impuls, sondern Überzeugung. Stehe allein mit deinem Urteil." }
+  ],
+  // Kap 5
+  [
+    { icon: "&#128218;", title: "Die sechs Säulen lernen", desc: "Schreibe die sechs Praktiken auf einen Zettel: Bewusstsein, Selbstakzeptanz, Verantwortung, Behauptung, Zielgerichtetheit, Integrität. Hänge ihn auf." },
+    { icon: "&#128200;", title: "Kleinen Schritt wählen", desc: "Wähle eine Säule, in der du am schwächsten bist. Definiere eine konkrete, kleine Handlung für heute – nicht morgen, heute." },
+    { icon: "&#128196;", title: "Satzergänzung starten", desc: "Beginne morgen früh mit: 'Wenn ich 5% mehr Bewusstsein in mein Leben bringe …' – 6 Enden, spontan, ohne nachzudenken." }
+  ],
+  // Kap 6 - Bewusst leben
+  [
+    { icon: "&#128161;", title: "Morgendliche Bewusstseinsfrage", desc: "Stelle dir jeden Morgen die Frage: 'Welcher Bereich meines Lebens verdient heute mehr Aufmerksamkeit?' Schreibe die Antwort auf." },
+    { icon: "&#128683;", title: "Eine Vermeidung konfrontieren", desc: "Identifiziere eine Tatsache in deinem Leben, der du ausweichst. Schreibe sie auf. Halte sie 5 Minuten lang bewusst aus, ohne zu handeln." },
+    { icon: "&#127358;", title: "5%-Bewusstsein-Experiment", desc: "Wähle eine Beziehung oder Aufgabe. Sei heute dort 5% bewusster als sonst. Was nimmst du wahr, was du vorher ignoriert hast?" },
+    { icon: "&#128221;", title: "Satzergänzung: Bewusstsein", desc: "Täglich: 'Wenn ich meinem Leben heute mehr Bewusstsein bringe …' – 6 Enden, morgens, 5 Minuten." }
+  ],
+  // Kap 7 - Selbstakzeptanz
+  [
+    { icon: "&#128119;", title: "Spiegel-Übung täglich", desc: "2 Minuten täglich: Schaue dir in die Augen und sage: 'Ich akzeptiere mich vollständig.' Beobachte, was entsteht – Widerstand ist Information." },
+    { icon: "&#128100;", title: "Den abgelehnten Teil benennen", desc: "Schreibe einen Aspekt von dir auf, den du ablehnst. Schreibe dann: 'Ich nehme zur Kenntnis, dass ich … empfinde / bin / tue.' Kein Urteil." },
+    { icon: "&#9728;", title: "Stärken annehmen", desc: "Benenne drei Stärken, die du an dir unterdrückst oder herunterspielst. Warum? Was wäre, wenn du sie vollständig annimmst?" },
+    { icon: "&#128221;", title: "Satzergänzung: Akzeptanz", desc: "'Wenn ich mich selbst vollständig akzeptiere …' – 6 Enden, spontan. Dann: 'Wenn ich mich selbst ablehne …' – 6 Enden." }
+  ],
+  // Kap 8 - Selbstverantwortung
+  [
+    { icon: "&#128313;", title: "Verantwortungsliste erstellen", desc: "Schreibe 10 Bereiche deines Lebens auf. Markiere: Wo übernimmst du Verantwortung? Wo gibst du sie ab oder schiebst sie auf andere?" },
+    { icon: "&#128683;", title: "Schuld abgeben – heute aufhören", desc: "Identifiziere eine Person oder einen Umstand, dem du Schuld an deiner Situation gibst. Schreibe auf, was du stattdessen selbst tun kannst." },
+    { icon: "&#127775;", title: "\"Niemand kommt\" verinnerlichen", desc: "Schreibe auf: 'Was würde ich tun, wenn ich wüsste, dass niemand kommt?' Handle dann entsprechend – in einem kleinen Bereich." },
+    { icon: "&#128221;", title: "Satzergänzung: Verantwortung", desc: "'Wenn ich volle Verantwortung für mein Leben übernehme …' – 6 Enden. Dann: 'Wenn ich Verantwortung vermeide …' – 6 Enden." }
+  ],
+  // Kap 9 - Selbstbehauptung
+  [
+    { icon: "&#128483;", title: "\"Ich habe ein Recht zu existieren\"", desc: "Sage laut und langsam: 'Ich habe ein Recht zu existieren.' Beobachte: Klingt es defensiv, bittend, arrogant? Was verrät das über dich?" },
+    { icon: "&#128172;", title: "Einmal klar Nein sagen", desc: "Sage heute in einer Situation klar Nein, wo du es meinst. Kein Entschuldigen, kein Erklären. Beobachte deine Reaktion danach." },
+    { icon: "&#127925;", title: "Die Musik zeigen", desc: "Teile heute einen Gedanken, eine Meinung oder einen Wert mit jemandem, den du normalerweise für dich behältst. Kleine Version ist ausreichend." },
+    { icon: "&#128221;", title: "Satzergänzung: Behauptung", desc: "'Wenn ich 5% selbstbehauptender lebte …' und 'Wenn ich meine Wünsche ernst nehme …' – jeweils 6 Enden." }
+  ],
+  // Kap 10 - Zielgerichtet
+  [
+    { icon: "&#127919;", title: "\"Ich werde\" statt \"Ich hoffe\"", desc: "Gehe deine aktuellen Ziele durch. Ersetze jedes 'Ich hoffe' und 'Ich wünsche' durch 'Ich werde – bis [Datum].' Konkret werden." },
+    { icon: "&#128203;", title: "Einen Aktionsplan erstellen", desc: "Wähle dein wichtigstes Ziel. Schreibe drei konkrete nächste Schritte auf. Definiere, wann du jeden Schritt machst." },
+    { icon: "&#128270;", title: "Wochenmitte: Kurs überprüfen", desc: "Mittwochs: Bin ich auf Kurs? Was hat funktioniert? Was muss angepasst werden? 10 Minuten reichen." },
+    { icon: "&#128221;", title: "Satzergänzung: Zielgerichtetheit", desc: "'Zielgerichtet zu leben bedeutet für mich …' und 'Wenn ich 5% zielgerichteter handele …' – morgens, 6 Enden." }
+  ],
+  // Kap 11 - Integrität
+  [
+    { icon: "&#9878;", title: "Kongruenz-Check", desc: "Schreibe drei Werte auf, die du vertrittst. Überprüfe dann ehrlich: Handelst du tatsächlich entsprechend diesen Werten? Wo gibt es eine Lücke?" },
+    { icon: "&#128222;", title: "Ein Versprechen einlösen", desc: "Identifiziere ein Versprechen, das du dir selbst oder anderen gegenüber nicht gehalten hast. Halte es heute – oder kommuniziere ehrlich, dass du es nicht halten kannst." },
+    { icon: "&#128295;", title: "Moralische Reparatur", desc: "Gibt es jemanden, dem du Unrecht getan hast? Anerkenne es (bei dir selbst), verstehe warum, und überlege eine konkrete Wiedergutmachung." },
+    { icon: "&#128221;", title: "Satzergänzung: Integrität", desc: "'Integrität bedeutet für mich …' und 'Wenn ich 5% mehr Integrität in mein Leben bringe …' – 6 Enden, morgens." }
+  ],
+  // Kap 12 - Philosophie
+  [
+    { icon: "&#129504;", title: "Überzeugungen überprüfen", desc: "Schreibe drei tiefe Überzeugungen über dich auf. Frage dann: Führen diese Überzeugungen zu den sechs Praktiken hin – oder weg davon?" },
+    { icon: "&#128683;", title: "Fremdbestimmte Werte loslassen", desc: "Identifiziere eine Überzeugung, die du von anderen übernommen hast (Familie, Kultur, Religion) und die deinen SE untergräbt. Hinterfrage sie." },
+    { icon: "&#127758;", title: "Das eigene Leben beanspruchen", desc: "Schreibe auf: 'Mein Leben gehört mir. Das bedeutet konkret …' Mindestens 5 Konsequenzen für deinen Alltag." }
+  ],
+  // Kap 13 - Kind
+  [
+    { icon: "&#128100;", title: "Bedingungs-Muster erkennen", desc: "Erinnere dich: Wurde deine Kindheitsliebe an Bedingungen geknüpft? Schreibe auf, welche Botschaften du über deinen Wert erhalten hast." },
+    { icon: "&#128140;", title: "Liebe und Verhalten trennen", desc: "Wenn du Kinder hast: Kritisiere das Verhalten, nie die Person. 'Das war unehrlich' statt 'Du bist unehrlich.'" },
+    { icon: "&#127775;", title: "Das Modell sein", desc: "Frage dich: Welche SE-Praktiken lebst du vor? Was würden Kinder (oder Menschen um dich) von deinem Umgang mit dir selbst lernen?" }
+  ],
+  // Kap 14 - Schule
+  [
+    { icon: "&#127979;", title: "Zweite Chance annehmen", desc: "Wer war ein Lehrer, der an dich geglaubt hat? Schreibe auf, was das bedeutet hat. Kannst du für jemanden diese Rolle spielen?" },
+    { icon: "&#128172;", title: "Vertrauen aussprechen", desc: "Sage heute jemandem (Kind, Kollege, Freund) konkret und ehrlich: 'Ich vertraue darauf, dass du das schaffst – weil …'" },
+    { icon: "&#9999;", title: "Fehlerkultur etablieren", desc: "Wenn du Fehler machst: Benenne sie sachlich, lerne daraus, dann lass los. Übe, ohne Scham zu sagen: 'Das war falsch, ich mache es anders.'" }
+  ],
+  // Kap 15 - Arbeit
+  [
+    { icon: "&#128188;", title: "SE-Audit im Job", desc: "Schreibe auf: Welche Aspekte meiner Arbeit stärken meinen SE? Welche untergraben ihn? Was kann ich konkret ändern?" },
+    { icon: "&#128313;", title: "Verantwortung sichtbar machen", desc: "Nimm in einer Arbeitssituation mehr Eigeninitiative als erwartet. Beobachte, wie sich das auf dein Selbstgefühl auswirkt." },
+    { icon: "&#128172;", title: "Respekt einfordern", desc: "Wenn du respektlos behandelt wirst: Sprich es ruhig und direkt an. 'Ich erwarte, dass wir uns gegenseitig respektvoll behandeln.'" }
+  ],
+  // Kap 16 - Therapie
+  [
+    { icon: "&#128221;", title: "Satzergänzung als Selbsttherapie", desc: "Wähle täglich einen Satzanfang aus dem Programm. 6 Enden, spontan. Das ist die wichtigste Einzelübung aus dem Buch." },
+    { icon: "&#128100;", title: "Innere Anteile befragen", desc: "Schreibe einen Brief an dein jüngeres Ich (8–12 Jahre). Was würdest du ihm sagen? Was brauchte es damals, das es nicht bekam?" },
+    { icon: "&#128270;", title: "Therapeuten richtig befragen", desc: "Bei der Suche nach einem Therapeuten frage: 'Was verstehen Sie unter Selbstwert? Was bewirkt unsere Zusammenarbeit konkret für meinen SE?'" }
+  ],
+  // Kap 17 - Kultur
+  [
+    { icon: "&#127758;", title: "Kulturelle Konditionierung erkennen", desc: "Schreibe auf: Welche Überzeugungen über 'Bescheidenheit', 'Selbstlosigkeit' oder 'Demut' hast du aus deiner Kultur übernommen? Dienen sie dir?" },
+    { icon: "&#128683;", title: "Konformismus als Wahl sehen", desc: "Wenn du dich anpasst: Frage dich, ob es aus Überzeugung oder aus Angst geschieht. Beides ist ehrlich – aber nur eines stärkt den SE." },
+    { icon: "&#127775;", title: "Das Selbst ehren als Mut", desc: "Tue heute eine Sache, die deinen echten Werten entspricht – auch wenn sie nicht zur Gruppenerwartung passt. Beginne klein." }
+  ],
+  // Kap 18 - Siebte Säule
+  [
+    { icon: "&#128293;", title: "Die Liebe zum Leben aktivieren", desc: "Schreibe auf: Was liebst du an deinem Leben? Was liebst du an dir selbst? Das ist kein Narzissmus – es ist der Treibstoff der sechs Säulen." },
+    { icon: "&#127919;", title: "Wähle eine Säule für diese Woche", desc: "Welche der sechs Praktiken ist gerade am schwächsten? Setze sie bewusst für 7 Tage als Fokus. Kleine tägliche Handlungen." },
+    { icon: "&#128221;", title: "Abschluss-Satzergänzung", desc: "'Wenn ich tief atme und mir erlaube zu spüren, wie sich Selbstwert anfühlt …' – 6 Enden. Täglich, bis du es glaubst." }
+  ]
+];
+// ==================== BUCH FUNCTIONS ====================
+var currentChapterIdx = 0;
+
+function renderBuch() {
+  var html = '<div class="fade-in">';
+
+  // Header quote
+  html += '<div class="card" style="margin-top:8px;background:linear-gradient(135deg,rgba(10,132,255,0.12),rgba(10,132,255,0.04));border-color:rgba(10,132,255,0.2);">';
+  html += '<div style="font-size:11px;font-weight:700;color:var(--blue);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:8px;">Nathaniel Branden</div>';
+  html += '<div style="font-size:15px;line-height:1.65;color:var(--text2);font-style:italic;">&bdquo;Selbstwert ist das Immunsystem des Bewusstseins.&ldquo;</div>';
+  html += '</div>';
+
+  var currentPart = null;
+  for (var i = 0; i < CHAPTERS.length; i++) {
+    var ch = CHAPTERS[i];
+    if (ch.part && ch.part !== currentPart) {
+      currentPart = ch.part;
+      html += '<div style="font-size:10px;font-weight:800;color:var(--text3);text-transform:uppercase;letter-spacing:1px;padding:14px 20px 6px;">' + esc(ch.part) + '</div>';
+    }
+    html += '<div class="card" style="cursor:pointer;padding:14px 16px;" onclick="openChapter(' + i + ')">';
+    html += '<div style="display:flex;align-items:center;gap:12px;">';
+    // Icon badge
+    html += '<div style="width:40px;height:40px;border-radius:12px;background:var(--accent2);color:var(--accent);font-size:13px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;">' + ch.icon + '</div>';
+    html += '<div style="flex:1;min-width:0;">';
+    html += '<div style="font-size:11px;font-weight:600;color:var(--text3);margin-bottom:2px;">' + esc(ch.label) + '</div>';
+    html += '<div style="font-size:15px;font-weight:700;line-height:1.3;">' + esc(ch.title) + '</div>';
+    html += '<div style="font-size:12px;color:var(--text3);margin-top:2px;">' + esc(ch.subtitle) + '</div>';
+    html += '</div>';
+    html += '<div style="color:var(--text3);font-size:16px;">&#8250;</div>';
+    html += '</div></div>';
+  }
+  html += '</div>';
+  document.getElementById('buch-scroll').innerHTML = html;
+}
+
+function openChapter(idx) {
+  currentChapterIdx = idx;
+  pushScreen('chapter');
+  renderChapter();
+}
+
+function renderChapter() {
+  var ch = CHAPTERS[currentChapterIdx];
+  var html = '<div class="fade-in" style="padding-bottom:32px;">';
+
+  // Hero
+  html += '<div style="margin:0 16px 14px;padding:20px;background:var(--card);border:1px solid var(--border);border-radius:18px;">';
+  html += '<div style="font-size:11px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:8px;">' + esc(ch.label) + '</div>';
+  html += '<div style="font-size:24px;font-weight:800;line-height:1.25;margin-bottom:6px;">' + esc(ch.title) + '</div>';
+  html += '<div style="font-size:14px;color:var(--text2);">' + esc(ch.subtitle) + '</div>';
+  html += '</div>';
+
+  // Kerngedanken
+  html += '<div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;padding:0 20px;margin-bottom:8px;">Kerngedanken</div>';
+  html += '<div class="card" style="padding:0;">';
+  for (var i = 0; i < ch.keypoints.length; i++) {
+    html += '<div style="display:flex;align-items:flex-start;gap:12px;padding:12px 16px;border-bottom:' + (i < ch.keypoints.length-1 ? '1px solid var(--border)' : 'none') + ';">';
+    html += '<div style="width:22px;height:22px;border-radius:50%;background:var(--accent);color:#000;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;">' + (i+1) + '</div>';
+    html += '<div style="font-size:14px;line-height:1.5;color:var(--text);">' + esc(ch.keypoints[i]) + '</div>';
+    html += '</div>';
+  }
+  html += '</div>';
+
+  // Zusammenfassung
+  html += '<div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;padding:0 20px;margin-bottom:8px;margin-top:6px;">Zusammenfassung</div>';
+  html += '<div class="card">';
+  html += '<div style="font-size:15px;line-height:1.75;color:var(--text2);">' + esc(ch.summary) + '</div>';
+  html += '</div>';
+
+  // Zitat
+  html += '<div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;padding:0 20px;margin-bottom:8px;margin-top:6px;">Brandons Zitat</div>';
+  html += '<div class="card" style="background:linear-gradient(135deg,var(--accent-12),var(--accent-07));border-color:var(--accent-25);">';
+  html += '<div style="font-size:15px;line-height:1.7;color:var(--text);font-style:italic;">&bdquo;' + esc(ch.quote) + '&ldquo;</div>';
+  html += '<div style="font-size:12px;color:var(--text3);margin-top:8px;">&#8212; Nathaniel Branden</div>';
+  html += '</div>';
+
+  // Umsetzung / Actions
+  var actions = CHAPTER_ACTIONS[currentChapterIdx];
+  if (actions && actions.length > 0) {
+    html += '<div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;padding:0 20px;margin-bottom:8px;margin-top:6px;">Jetzt umsetzen</div>';
+    html += '<div class="card" style="padding:0;">';
+    for (var ai = 0; ai < actions.length; ai++) {
+      var a = actions[ai];
+      html += '<div style="display:flex;align-items:flex-start;gap:12px;padding:14px 16px;border-bottom:' + (ai < actions.length-1 ? '1px solid var(--border)' : 'none') + ';">';
+      html += '<div style="width:36px;height:36px;border-radius:10px;background:var(--accent2);font-size:18px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">' + a.icon + '</div>';
+      html += '<div style="flex:1;min-width:0;">';
+      html += '<div style="font-size:14px;font-weight:700;margin-bottom:3px;">' + esc(a.title) + '</div>';
+      html += '<div style="font-size:13px;color:var(--text2);line-height:1.5;">' + esc(a.desc) + '</div>';
+      html += '</div></div>';
+    }
+    html += '</div>';
+  }
+
+  // Navigation prev/next
+  html += '<div style="display:flex;gap:10px;padding:0 16px;margin-top:8px;">';
+  if (currentChapterIdx > 0) {
+    html += '<div class="card" style="flex:1;cursor:pointer;text-align:center;padding:12px;" onclick="openChapter(' + (currentChapterIdx-1) + ')">';
+    html += '<div style="font-size:11px;color:var(--text3);margin-bottom:2px;">&#8249; Vorheriges</div>';
+    html += '<div style="font-size:13px;font-weight:600;">' + esc(CHAPTERS[currentChapterIdx-1].title) + '</div>';
+    html += '</div>';
+  }
+  if (currentChapterIdx < CHAPTERS.length-1) {
+    html += '<div class="card" style="flex:1;cursor:pointer;text-align:center;padding:12px;" onclick="openChapter(' + (currentChapterIdx+1) + ')">';
+    html += '<div style="font-size:11px;color:var(--text3);margin-bottom:2px;">Nächstes &#8250;</div>';
+    html += '<div style="font-size:13px;font-weight:600;">' + esc(CHAPTERS[currentChapterIdx+1].title) + '</div>';
+    html += '</div>';
+  }
+  html += '</div>';
+
+  html += '</div>';
+  document.getElementById('chapter-scroll').innerHTML = html;
+  document.getElementById('chapter-scroll').scrollTop = 0;
+}
+
+
+// ==================== TAGESSPRUCH ====================
+var QUOTES = [
+  { text: "Selbstwert ist das Immunsystem des Bewusstseins.", ch: "Kap. 1" },
+  { text: "Unser Geist ist unser grundlegendes Überlebenswerkzeug. Verrate ihn, und der Selbstwert leidet.", ch: "Kap. 6" },
+  { text: "Selbstakzeptanz ist meine Weigerung, in adversarieller Beziehung zu mir selbst zu stehen.", ch: "Kap. 7" },
+  { text: "Niemand schuldet mir die Erfüllung meiner Wünsche.", ch: "Kap. 8" },
+  { text: "Niemand kommt. Wenn ich nichts tue, wird sich nichts verbessern.", ch: "Kap. 8" },
+  { text: "Das größte Verbrechen gegen uns selbst: nicht unsere Schwächen verleugnen, sondern unsere Größe – weil sie uns ängstigt.", ch: "Kap. 7" },
+  { text: "Ohne Ziel zu leben bedeutet, dem Zufall ausgeliefert zu sein.", ch: "Kap. 10" },
+  { text: "Wenn wir gegen unser eigenes Urteil handeln, verlieren wir das Gesicht in unseren eigenen Augen.", ch: "Kap. 11" },
+  { text: "Integrität bedeutet Kongruenz. Worte und Verhalten stimmen überein.", ch: "Kap. 11" },
+  { text: "Das Niveau unseres Selbstwerts beeinflusst jeden Aspekt unserer Existenz.", ch: "Kap. 1" },
+  { text: "Selbstwirksamkeit bedeutet Vertrauen in meine Fähigkeit zu denken, zu lernen und zu entscheiden.", ch: "Kap. 2" },
+  { text: "Selbstachtung bedeutet, dass Freude und Erfüllung mein natürliches Geburtsrecht sind.", ch: "Kap. 2" },
+  { text: "Ein Geist, der sich selbst verrät, schwächt den Selbstwert.", ch: "Kap. 6" },
+  { text: "Wie ich zu anderen stehe, spiegelt, wie ich zu mir selbst stehe.", ch: "Kap. 3" },
+  { text: "Selbstbehauptung erfordert Mut – aber dieser Mut ist auch der Weg, durch den Selbstwert entsteht.", ch: "Kap. 9" },
+  { text: "Kleine Verbesserungen in den sechs Praktiken machen einen außerordentlichen Unterschied.", ch: "Kap. 5" },
+  { text: "Sich selbst zu ehren – Geist, Urteil, Werte – ist der ultimative Akt des Mutes.", ch: "Kap. 17" },
+  { text: "Die Energie für das Engagement kommt nur aus der Liebe, die wir für unser eigenes Leben haben.", ch: "Kap. 18" },
+  { text: "Selbstverantwortung ist: Ich bin der Autor meines Lebens, nicht das Opfer der Umstände.", ch: "Kap. 8" },
+  { text: "Zu wissen, was ich will, und es zu tun – das ist der Unterschied zwischen Driften und Leben.", ch: "Kap. 10" },
+  { text: "Nicht unsere Leistungen, sondern die Art, wie wir unser Leben führen, erzeugt Selbstwert.", ch: "Kap. 2" },
+  { text: "Selbstakzeptanz ist die Vorbedingung jeder Veränderung und jeden Wachstums.", ch: "Kap. 7" },
+  { text: "In der Unterstützung des Selbstwerts unserer Kinder unterstützen wir unseren eigenen.", ch: "Kap. 13" },
+  { text: "Die Richtlinien, die Selbstwert unterstützen, sind auch die, die langfristig Erfolg bringen.", ch: "Kap. 15" },
+  { text: "Mut bedeutet nicht die Abwesenheit von Angst, sondern die Entscheidung, trotzdem zu handeln.", ch: "Kap. 18" },
+  { text: "Bewusst zu leben heißt, der Realität nicht auszuweichen – auch wenn sie unbequem ist.", ch: "Kap. 6" },
+  { text: "Wenn Idealvorstellung und Handlung übereinstimmen, erleben wir Integrität.", ch: "Kap. 11" },
+  { text: "Selbstbehauptung heißt: Die Musik in mir nicht verstecken.", ch: "Kap. 9" },
+  { text: "Pseudo-Selbstwert kostet die Energie, die wir für echtes Leben brauchen würden.", ch: "Kap. 4" },
+  { text: "Das Leben eines Menschen gehört ihm selbst – das ist die philosophische Basis des Selbstwerts.", ch: "Kap. 12" },
+  { text: "Wer sich selbst hasst, hasst andere. Wer sich liebt, kann wirklich lieben.", ch: "Kap. 3" }
+];
+
+function getTodayQuote() {
+  // Deterministic per day — same quote all day, rotates daily
+  var now = new Date();
+  var dayIndex = Math.floor(now.getTime() / 86400000) % QUOTES.length;
+  return QUOTES[dayIndex];
+}
+
+// ==================== MICRO-CHALLENGES ====================
+// Per week, 5 challenges (one per day). Passt zur aktuellen Woche.
+var MICRO_CHALLENGES = [
+  // Woche 1 - Grundlagen
+  [
+    "Schreibe heute Morgen auf: Was ist eine Sache, der ich in meinem Leben ausweiche? Nur aufschreiben, nicht lösen.",
+    "Beobachte heute: Wann suchst du Bestätigung von anderen? Notiere 3 Momente.",
+    "Erledige eine Aufgabe, die du schon lange aufgeschoben hast. Keine große – eine kleine, heute.",
+    "Sage heute einmal direkt, was du denkst, ohne es vorher abzuschwächen.",
+    "Schreibe abends: Was habe ich heute gut gemacht? Mindestens 3 Dinge – keine Entschuldigungen."
+  ],
+  // Woche 2 - Bewusstsein vertiefen
+  [
+    "Wähle eine wichtige Beziehung. Stelle dir heute die Frage: Bin ich dort wirklich präsent oder auf Autopilot?",
+    "Identifiziere eine Unsicherheit, die dich gerade beschäftigt. Schreibe sie auf – ohne sie zu bekämpfen.",
+    "Was willst du wirklich – nicht was andere von dir erwarten? Schreibe 5 ehrliche Antworten auf.",
+    "Beobachte heute deine Emotionen wie ein Forscher: Wann tauchen sie auf? Was löst sie aus?",
+    "Wähle einen Bereich, in dem du dich selbst belügst. Schreibe die Wahrheit auf."
+  ],
+  // Woche 3 - Zuhören
+  [
+    "Führe heute ein Gespräch, in dem du ausschließlich zuhörst. Kein Ratschlag, keine eigene Geschichte.",
+    "Bemerke heute, wie Menschen reagieren, wenn du wirklich zuhörst vs. wenn du nur wartest.",
+    "Sprich heute mit jemandem bewusster als sonst. Schaue ihn an. Lass Pausen zu.",
+    "Tue heute eine Sache gegenüber einem anderen Menschen, die echte Güte zeigt – ohne Gegenleistung.",
+    "Frage heute jemanden: 'Wie geht es dir wirklich?' Und hör die Antwort wirklich an."
+  ],
+  // Woche 4 - Selbstwert aktivieren
+  [
+    "Beginne den Tag mit: 'Ich bringe heute Selbstwert in alles, was ich tue.' Schreibe auf, was das konkret bedeutet.",
+    "Behandle dich heute in einer Situation so, wie du einen guten Freund behandeln würdest.",
+    "Mache heute einen Fehler – und akzeptiere ihn ohne Selbstkritik. Nur: was kann ich daraus lernen?",
+    "Wenn du heute overwhelmed bist: Sage dir: 'Das ist eine vorübergehende Emotion, nicht meine Identität.'",
+    "Schreibe 3 Dinge auf, die du an dir selbst schätzt. Kein Relativieren."
+  ],
+  // Woche 5 - Körper
+  [
+    "Mache heute etwas Körperliches, das du genießt. Beobachte, wie dein Körpergefühl deinen Geisteszustand beeinflusst.",
+    "Welchen Konflikt vermeidest du gerade? Schreibe ihn auf – ohne Lösung. Nur anerkennen, dass er existiert.",
+    "Behandle deinen Körper heute mit Respekt: Schlaf, Essen, Bewegung. Eine konkrete Verbesserung.",
+    "Akzeptiere heute einen Teil deines Körpers, den du normalerweise ablehnst. Nur für heute.",
+    "Schreibe auf: Welche Teile von mir lehne ich ab? Was wäre, wenn ich sie alle annehmen würde?"
+  ],
+  // Woche 6 - Gefühle und Gedanken
+  [
+    "Identifiziere heute ein Gefühl, das du normalerweise wegdrückst. Benenne es nur: 'Ich bemerke, dass ich … fühle.'",
+    "Wenn ein negativer Gedanke kommt: Schreibe ihn auf. Dann schreibe: 'Ich bemerke, dass ich denke: …'",
+    "Tue heute eine Sache, die deinen Selbstwert stärkt. Klein ist gut. Was ist es?",
+    "Erlaube dir heute, eine Emotion vollständig zu fühlen – ohne sie zu analysieren oder wegzumachen.",
+    "Schreibe abends: Welche Gedanken haben mich heute am meisten beschäftigt? Was sagt das über mich?"
+  ],
+  // Woche 7 - Angst und Schmerz
+  [
+    "Benne eine Angst, die dich gerade begleitet. Schreibe sie auf, ohne sie zu bekämpfen oder zu lösen.",
+    "Akzeptiere heute einen Schmerz oder eine Enttäuschung: 'Das ist real, und ich kann damit umgehen.'",
+    "Tu heute eine kleine Sache, die dir Angst macht. Klein, aber echt.",
+    "Schreibe: Was wäre, wenn ich meine Angst nicht bekämpfe, sondern sie als Information behandle?",
+    "Wo versteckst du deinen Schmerz? Benenne ihn heute ehrlich – nur für dich."
+  ],
+  // Woche 8 - Wut und Sexualität
+  [
+    "Wenn du heute Wut spürst: Benenne sie. 'Ich bin wütend weil …' Schreib es auf, sag es nicht impulsiv.",
+    "Akzeptiere heute eine Emotion, die du normalerweise als 'unpassend' ablehnst.",
+    "Schreibe: Was würde ich fühlen dürfen, wenn niemand zusieht?",
+    "Beobachte heute: Wann unterdrückst du deine natürliche Energie? Warum?",
+    "Benenne eine Emotion, die du regelmäßig von dir weist. Was kostet dich diese Ablehnung?"
+  ],
+  // Woche 9 - Aufregung und Intelligenz
+  [
+    "Tue heute etwas, das dich wirklich aufgeregt – und lass diese Aufregung zu, ohne sie zu bremsen.",
+    "Vertraue heute in einer Entscheidung deiner eigenen Einschätzung. Kein zweites Meinungseinholen.",
+    "Schreibe: In welchen Bereichen halte ich meine Intelligenz zurück? Warum?",
+    "Teile heute eine Idee, die du sonst für dich behältst, aus Angst, sie könnte als 'zu viel' wirken.",
+    "Identifiziere einen Bereich, wo du schlauer bist als du zugibst. Schreibe ihn auf."
+  ],
+  // Woche 10 - Freude und Integration
+  [
+    "Tu heute etwas, das dir echte Freude bereitet – nicht produktiv, einfach Freude.",
+    "Schreibe: Welche Teile von mir habe ich noch nicht vollständig angenommen?",
+    "Nimm dir heute 5 Minuten: Sitze still und fühle, wer du wirklich bist – alle Teile.",
+    "Schreibe einen Brief an dich selbst, in dem du alle deine Widersprüche anerkennst und akzeptierst.",
+    "Was wäre möglich, wenn du dich vollständig annimmst – Stärken, Schwächen, Widersprüche und alles?"
+  ],
+  // Woche 11 - Selbstverantwortung
+  [
+    "Wähle einen Bereich, in dem du anderen die Schuld gibst. Schreibe: Was könnte ICH dort anders tun?",
+    "Handle heute in einem wichtigen Bereich so, als ob niemand kommen wird, um es für dich zu richten.",
+    "Schreibe: Was sind 3 Dinge, die ich in meinem Leben verbessern will – und was tue ICH dafür?",
+    "Wenn du heute in Passivität gleitest: Bemerke es. Frage: Was ist die kleinste Handlung, die ich jetzt tun kann?",
+    "Erstelle einen konkreten Plan für eine Sache, die du seit Langem aufschiebst. Erster Schritt: heute."
+  ],
+  // Woche 12 - Verantwortung Beziehungen
+  [
+    "Übernimm heute aktiv Verantwortung für den Ton einer Beziehung. Kein Warten auf den anderen.",
+    "Bemerke heute, wann du dich in einer Beziehung passiv oder hilflos machst. Nur bemerken.",
+    "Sage heute in einer Beziehung klar, was du brauchst – ohne Umwege oder Andeutungen.",
+    "Schreibe: Was tue ich aktiv, damit meine wichtigste Beziehung besser wird?",
+    "Anerkenne heute einen Anteil, den du an einem Konflikt hattest. Ohne Selbstgeißelung – nur ehrlich."
+  ],
+  // Woche 13 - Verantwortung Leben
+  [
+    "Schreibe: Welches Niveau des Lebens entspricht wirklich meinen Werten? Was tue ich, um dort zu sein?",
+    "Wähle bewusst: Mit wem verbringst du deine Zeit? Trägt das zu deinem Wachstum bei?",
+    "Handle heute in einer Situation so, als ob dein persönliches Glück wirklich von dir abhängt.",
+    "Schreibe: Was wäre in meinem Leben anders, wenn ich 100% Verantwortung für meinen Selbstwert übernehme?",
+    "Wähle heute eine Entscheidung, die du schon lange aufschiebst. Entscheide. Handle."
+  ],
+  // Woche 14 - Selbstbehauptung
+  [
+    "Sage heute einmal klar Nein, wenn du Nein meinst. Ohne Entschuldigung, ohne langes Erklären.",
+    "Teile heute einen echten Gedanken oder eine Meinung mit – einer, den du sonst zurückhältst.",
+    "Behandle heute deine eigenen Gedanken mit demselben Respekt, den du Gedanken anderer gibst.",
+    "Identifiziere einen Wunsch, den du nie aussprichst. Sprich ihn heute aus – zumindest dir selbst gegenüber.",
+    "Schreibe: Wo in meinem Leben verleugne ich, wer ich wirklich bin? Was wäre, wenn ich aufhöre?"
+  ],
+  // Woche 15 - Eigene Bedürfnisse
+  [
+    "Schreibe: Was brauchte das Kind in mir damals, das es nicht bekam? Wie kann ich mir das heute selbst geben?",
+    "Handle heute einmal so, als ob deine Wünsche wirklich zählen – nicht weniger als die der anderen.",
+    "Lass heute die Musik in dir heraus: Zeige einem Menschen etwas Echtes von dir.",
+    "Schreibe: Wenn mein Leben wirklich mir gehört – was ändere ich als erstes?",
+    "Tu heute eine Sache ausschließlich für dich. Nicht produktiv, nicht für andere. Nur für dich."
+  ],
+  // Woche 16 - Zielgerichtet leben
+  [
+    "Schreibe dein wichtigstes Ziel in einem Satz auf. Dann: Was ist der eine nächste Schritt? Wann machst du ihn?",
+    "Ersetze heute jedes 'Ich hoffe' und 'Ich wünsche' durch 'Ich werde – bis [Datum].'",
+    "Arbeite heute 25 Minuten fokussiert an deinem wichtigsten Ziel. Keine Ablenkung.",
+    "Schreibe: Was blockiert mich vom zielgerichteten Handeln? Angst, Unklarheit, Trägheit?",
+    "Definiere deinen Wochenfokus: Was ist die eine Sache, die alles andere einfacher macht?"
+  ],
+  // Woche 17 - Ziele und Glück
+  [
+    "Schreibe: Was macht mich wirklich glücklich? Nicht was sollte – was tut es wirklich?",
+    "Handle heute in einer Situation so, als ob dein Glück ein bewusstes Ziel ist, nicht ein Zufallsprodukt.",
+    "Wähle einen Wunsch, der dir wirklich wichtig ist. Erstelle einen Aktionsplan mit drei Schritten.",
+    "Schreibe: Wo lasse ich mein Glück von Umständen oder anderen abhängen, die ich nicht kontrolliere?",
+    "Tu heute eine Sache, die direkt zu deinem tiefsten Lebensziel beiträgt – auch wenn sie klein ist."
+  ],
+  // Woche 18 - Integrität
+  [
+    "Schreibe drei Werte auf, die dir wichtig sind. Überprüfe: Handelst du heute entsprechend?",
+    "Identifiziere eine Lücke zwischen deinen Worten und deinen Handlungen. Schließe sie in einem kleinen Bereich.",
+    "Halte heute ein Versprechen – eines, das du dir selbst gegeben hast und noch nicht gehalten hast.",
+    "Schreibe: Was wäre ich bereit zu tun, wenn niemand zusieht – und warum tue ich es nicht öffentlich?",
+    "Benenne eine Situation, in der du unehrlich warst. Was wäre die integre Alternative gewesen?"
+  ],
+  // Woche 19 - Integrität Beziehungen
+  [
+    "Sei heute in einer Beziehung radikal ehrlich – sag etwas Wahres, das du bisher zurückgehalten hast.",
+    "Überprüfe: Wo lebst du in einer Beziehung nach Werten, die du gar nicht teilst? Warum?",
+    "Behandle heute deinen Selbstrespekt als nicht verhandelbar – in einer Situation, in der du das sonst nicht tust.",
+    "Schreibe: Was würde sich in meinen Beziehungen verändern, wenn ich konsequent integer handle?",
+    "Tue heute eine Sache, die zeigt, dass du die Werte, die du vertrittst, auch wirklich lebst."
+  ],
+  // Woche 20 - Inneres Kind
+  [
+    "Schreibe einen Brief an das Kind, das du warst. Was hättest du damals gebraucht?",
+    "Frage dich: Was würde mein jüngeres Ich über mein heutiges Leben denken?",
+    "Stell dir vor, du könntest deinem kindlichen Ich begegnen. Was würdest du ihm sagen?",
+    "Schreibe: Was hat mein inneres Kind noch nicht von mir bekommen? Wie kann ich anfangen, es zu geben?",
+    "Tue heute eine Sache, die dein inneres Kind glücklich machen würde. Ernsthaft."
+  ],
+  // Woche 21 - Jüngere Anteile
+  [
+    "Wenn du heute Angst oder Schmerz spürst: Frage dich, ob das dein inneres Kind ist. Behandle es mit Güte.",
+    "Stell dir vor, du hältst dein kindliches Ich in den Armen. Was fühlt es? Was brauchst du dafür?",
+    "Schreibe: Wo in meinem Leben handelt mein inneres Kind statt meines erwachsenen Selbst?",
+    "Zeige heute Mitgefühl für einen früheren Fehler von dir. Du hast damals das Beste gegeben, was du konntest.",
+    "Handle heute in einer Situation so, als ob du auf der Seite deines jüngeren Selbst bist."
+  ],
+  // Woche 22 - Ablehnung erkennen
+  [
+    "Schreibe: Wann fühlt sich mein inneres Kind von mir abgelehnt? In welchen Situationen ignoriere ich es?",
+    "Was braucht dein inneres Kind von dir, das es bisher nicht bekommen hat? Schreibe es auf.",
+    "Bemerke heute, wenn du impulsiv reagierst. Frage: Ist das mein inneres Kind, das sich rächt?",
+    "Schreibe: Was gibt mein inneres Kind mir, wenn es nicht gehört wird? Welche Verhaltensweisen entstehen?",
+    "Was wäre in deinem Leben anders, wenn dein inneres Kind sich wirklich angenommen fühlt?"
+  ],
+  // Woche 23 - Verbindung
+  [
+    "Stell dir vor, du und dein inneres Kind werden Freunde. Was ist der erste Schritt?",
+    "Schreibe einen Dialog zwischen dir heute und dir als Kind. Was wollt ihr einander sagen?",
+    "Tue heute eine Sache, die zeigt, dass du dein inneres Kind wirklich magst.",
+    "Schreibe: Was würde sich verändern, wenn ich mein inneres Kind als Teil von mir liebe statt fürchte?"
+  ],
+  // Woche 24 - Vertrauen
+  [
+    "Sei heute geduldig mit dir selbst – in einer Situation, in der du normalerweise ungeduldig wärst.",
+    "Schreibe: Warum könnte es meinem inneren Kind schwerfallen, mir zu vertrauen? Was habe ich getan oder nicht getan?",
+    "Handle heute so, dass dein inneres Kind sieht: Ich bin verlässlich. Ich halte Wort – auch mir selbst gegenüber.",
+    "Mir wird bewusst: Schreibe heute 6 Satzenden, spontan. Was taucht auf?"
+  ],
+  // Woche 25 - Schwierige Gefühle
+  [
+    "Wenn du heute Angst spürst: Sitze damit. 2 Minuten. Ohne es wegzumachen. Was passiert?",
+    "Wenn du heute Schmerz spürst: Benenne ihn. 'Ich fühle Schmerz, weil …' Kein Drama, nur Klarheit.",
+    "Wenn du heute Wut spürst: Schreibe sie auf statt sie auszuspielen oder zu unterdrücken.",
+    "Schreibe: Was wäre eine weise Antwort auf meine aktuelle Angst – statt Flucht oder Kampf?",
+    "Übe: Fühle ein schwieriges Gefühl vollständig, ohne es zu verändern. Nur 3 Minuten."
+  ],
+  // Woche 26 - Positive Gefühle
+  [
+    "Lass heute Aufregung zu – ohne sie sofort zu bremsen oder zu rationalisieren.",
+    "Schreibe: Welche positiven Gefühle unterdrücke ich? Warum fühlt es sich gefährlich an, sie zu zeigen?",
+    "Zeige heute jemandem echte Begeisterung für etwas – ungefiltert.",
+    "Schreibe: Was wäre möglich, wenn ich mit meiner ganzen emotionalen Energie im Einklang wäre?",
+    "Tue heute eine Sache, die dir wirklich Energie gibt. Beobachte, wie sich das auf alles andere auswirkt."
+  ],
+  // Woche 27 - Sicherer Raum
+  [
+    "Schaffe dir heute einen Moment der Stille und Sicherheit. Kein Input, kein Lärm. 10 Minuten.",
+    "Schreibe: Was brauche ich, um mich bei mir selbst wirklich sicher zu fühlen?",
+    "Behandle dich heute mit der Güte, die du einem guten Freund zeigen würdest – in jeder Situation.",
+    "Schreibe: Was würde mein inneres Kind sagen, wenn es sich bei mir vollkommen sicher fühlen würde?",
+    "Baue heute einen kleinen Ritual ein, der dir Sicherheit gibt. Morgen wiederhole ihn."
+  ],
+  // Woche 28 - Elternstimmen
+  [
+    "Schreibe: Welche Botschaft hat mir meine Mutter über meinen Wert gegeben? Glaube ich das noch?",
+    "Schreibe: Welche Botschaft hat mir mein Vater über meinen Wert gegeben? Dient sie mir heute?",
+    "Wann sprichst du heute mit dir selbst in der Stimme eines Elternteils? Bemerke es – ohne Urteil.",
+    "Schreibe: Welche elterliche Überzeugung über mich will ich bewusst loslassen?",
+    "Handle heute in einer Situation so, wie du es selbst für richtig hältst – nicht wie deine Eltern es erwartet hätten."
+  ],
+  // Woche 29 - Elternbeziehungen
+  [
+    "Schreibe: Was sehe ich an meiner Mutter realistisch – Stärken UND Grenzen? Ohne Idealisierung oder Verurteilung.",
+    "Schreibe: Was sehe ich an meinem Vater realistisch – Stärken UND Grenzen?",
+    "Wie viel Bewusstsein bringst du in deine Beziehung zu deinen Eltern? Was wird noch vermieden?",
+    "Schreibe: Was bräuchte ich, um meine Eltern als die Menschen zu sehen, die sie sind – nicht als die Eltern, die ich gebraucht hätte?",
+    "Was würde sich in dir verändern, wenn du deine Eltern vollständig realistisch siehst?"
+  ],
+  // Woche 30 - Psychologische Freiheit
+  [
+    "Schreibe: Was bedeutet es für mich, psychologisch frei von meinen Eltern zu sein?",
+    "Handle heute in einer Situation vollständig als Erwachsener – ohne auf elterliche Zustimmung zu warten.",
+    "Schreibe: Mein Leben gehört mir. Was ändere ich als erstes, wenn ich das wirklich glaube?",
+    "Identifiziere eine Entscheidung in deinem Leben, die du für jemand anderen triffst statt für dich. Was willst du wirklich?",
+    "Schreibe: Was würde ich heute tun, wenn ich wüsste, dass mein Leben wirklich mir gehört?"
+  ],
+  // Woche 31 - Alle sechs Säulen
+  [
+    "Schreibe: Welche der sechs Säulen ist heute am stärksten in mir? Welche am schwächsten?",
+    "Wähle die schwächste Säule. Tue heute eine konkrete, kleine Sache, um sie zu stärken.",
+    "Schreibe: Was hat sich in mir durch dieses Programm verändert? Was bleibt noch zu tun?",
+    "Atme tief. Schreibe: Wie fühlt sich Selbstwert heute für mich an? Was ist anders als vor 31 Wochen?",
+    "Beginne das Programm erneut. Du wirst es als neue Erfahrung erleben."
+  ]
+];
+
+function getTodayChallenge() {
+  var w = state.currentWeek;
+  var d = state.currentDay;
+  var challenges = MICRO_CHALLENGES[w] || MICRO_CHALLENGES[0];
+  return challenges[Math.min(d, challenges.length - 1)];
+}
+
+function getChallengeKey() {
+  return 'se_challenge_' + state.currentWeek + '_' + state.currentDay;
+}
+
+function isChallengeChecked() {
+  try { return localStorage.getItem(getChallengeKey()) === '1'; } catch(e) { return false; }
+}
+
+function setChallengeDone(done) {
+  try { localStorage.setItem(getChallengeKey(), done ? '1' : '0'); } catch(e) {}
+}
+
+function toggleChallenge() {
+  var done = !isChallengeChecked();
+  setChallengeDone(done);
+  if (done) showToast('Challenge erledigt! \uD83D\uDCAA');
+  renderHome();
+}
+
+// ==================== EINTRAEGE UEBERSICHT ====================
+var allEntriesCache = [];
+var allEntriesFiltered = [];
+
+function buildAllEntries() {
+  allEntriesCache = [];
+  for (var w = 0; w < 31; w++) {
+    for (var d = 0; d < 5; d++) {
+      for (var s = 0; s < WEEKS[w].stems.length; s++) {
+        var entries = getEntries(w, d, s);
+        for (var e = 0; e < entries.length; e++) {
+          allEntriesCache.push({
+            text: entries[e],
+            stem: WEEKS[w].stems[s],
+            week: w,
+            day: d,
+            stemIdx: s
+          });
+        }
+      }
+    }
+    var refl = getReflection(w);
+    for (var r = 0; r < refl.length; r++) {
+      allEntriesCache.push({
+        text: refl[r],
+        stem: 'Wochenreflexion',
+        week: w,
+        day: -1,
+        stemIdx: -1
+      });
+    }
+  }
+  // Most recent first
+  allEntriesCache.reverse();
+  allEntriesFiltered = allEntriesCache.slice();
+}
+
+function openEntriesOverview() {
+  buildAllEntries();
+  pushScreen('entries');
+  renderEntriesList('');
+}
+
+function filterEntries(query) {
+  var q = query.toLowerCase().trim();
+  if (!q) {
+    allEntriesFiltered = allEntriesCache.slice();
+  } else {
+    allEntriesFiltered = [];
+    for (var i = 0; i < allEntriesCache.length; i++) {
+      var e = allEntriesCache[i];
+      if (e.text.toLowerCase().indexOf(q) >= 0 || e.stem.toLowerCase().indexOf(q) >= 0) {
+        allEntriesFiltered.push(e);
+      }
+    }
+  }
+  renderEntriesList(query);
+}
+
+function renderEntriesList(query) {
+  var total = allEntriesCache.length;
+  var shown = allEntriesFiltered.length;
+  var html = '';
+
+  if (total === 0) {
+    html = '<div class="empty-state"><div class="empty-icon">&#9998;</div><div class="empty-text">Noch keine Eintr\u00e4ge vorhanden.<br>Starte das Programm auf dem Heute-Tab.</div></div>';
+    document.getElementById('entries-scroll').innerHTML = html;
+    return;
+  }
+
+  // Stats bar
+  html += '<div style="display:flex;gap:8px;padding:0 16px 10px;">';
+  html += '<div class="stat-card" style="text-align:center;"><div class="stat-num">' + total + '</div><div class="stat-label">Gesamt</div></div>';
+  html += '<div class="stat-card" style="text-align:center;"><div class="stat-num">' + shown + '</div><div class="stat-label">' + (query ? 'Gefunden' : 'Angezeigt') + '</div></div>';
+  var weeksWithEntries = 0;
+  for (var ww = 0; ww < 31; ww++) { if (getTotalEntries(ww) > 0) weeksWithEntries++; }
+  html += '<div class="stat-card" style="text-align:center;"><div class="stat-num">' + weeksWithEntries + '</div><div class="stat-label">Wochen aktiv</div></div>';
+  html += '</div>';
+
+  if (shown === 0) {
+    html += '<div class="empty-state"><div class="empty-icon">&#128270;</div><div class="empty-text">Keine Eintr\u00e4ge gefunden.</div></div>';
+    document.getElementById('entries-scroll').innerHTML = html;
+    return;
+  }
+
+  // Group by week
+  var grouped = {};
+  var groupOrder = [];
+  for (var i = 0; i < allEntriesFiltered.length; i++) {
+    var entry = allEntriesFiltered[i];
+    var wLabel = 'Woche ' + (entry.week + 1) + ' \u2013 ' + WEEKS[entry.week].theme;
+    if (!grouped[wLabel]) { grouped[wLabel] = []; groupOrder.push(wLabel); }
+    grouped[wLabel].push(entry);
+  }
+
+  for (var gi = 0; gi < groupOrder.length; gi++) {
+    var groupLabel = groupOrder[gi];
+    var items = grouped[groupLabel];
+    html += '<div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;padding:8px 20px 6px;">' + esc(groupLabel) + '</div>';
+    html += '<div class="card" style="padding:0;">';
+    for (var ii = 0; ii < items.length; ii++) {
+      var item = items[ii];
+      var dayLabel = item.day >= 0 ? 'Tag ' + (item.day+1) : 'Reflexion';
+      html += '<div style="padding:12px 16px;border-bottom:' + (ii < items.length-1 ? '1px solid var(--border)' : 'none') + ';">';
+      html += '<div style="font-size:11px;color:var(--accent);font-weight:600;margin-bottom:4px;">' + esc(dayLabel) + (item.stemIdx >= 0 ? ' \u00b7 S' + (item.stemIdx+1) : '') + '</div>';
+      html += '<div style="font-size:14px;line-height:1.5;">' + esc(item.text) + '</div>';
+      if (query) {
+        html += '<div style="font-size:11px;color:var(--text3);margin-top:3px;font-style:italic;">' + esc(item.stem.substring(0,60)) + '\u2026</div>';
+      }
+      html += '</div>';
+    }
+    html += '</div>';
+  }
+
+  document.getElementById('entries-scroll').innerHTML = html;
+}
+
+// ==================== EXPORT ====================
+var exportWeek = 0;
+
+function openExport(w) {
+  exportWeek = w;
+  pushScreen('export');
+  document.getElementById('export-week-label').textContent = 'Woche ' + (w + 1);
+  renderExport();
+}
+
+function buildExportText(w, mode) {
+  // mode: 'week' | 'all'
+  var lines = [];
+  var wk = WEEKS[w];
+
+  if (mode === 'week') {
+    lines.push('DIE SECHS SÄULEN DES SELBSTWERTS');
+    lines.push('Nathaniel Branden – Satzergänzungs-Programm');
+    lines.push('');
+    lines.push('WOCHE ' + (w+1) + ': ' + wk.theme.toUpperCase());
+    lines.push('=======================================');
+    lines.push('');
+
+    var hasContent = false;
+    for (var d = 0; d < 5; d++) {
+      var dayLines = [];
+      for (var s = 0; s < wk.stems.length; s++) {
+        var entries = getEntries(w, d, s);
+        if (entries.length > 0) {
+          dayLines.push('  Satzanfang: ' + wk.stems[s]);
+          for (var e = 0; e < entries.length; e++) {
+            dayLines.push('  -> ' + entries[e]);
+          }
+          dayLines.push('');
+        }
+      }
+      if (dayLines.length > 0) {
+        hasContent = true;
+        lines.push('TAG ' + (d+1));
+        lines.push('---------------------------------------');
+        lines = lines.concat(dayLines);
+      }
+    }
+
+    var refl = getReflection(w);
+    if (refl.length > 0) {
+      hasContent = true;
+      lines.push('WOCHENREFLEXION');
+      lines.push('---------------------------------------');
+      lines.push('  Satzanfang: ' + 'Wenn irgendetwas von dem, was ich diese Woche geschrieben habe, wahr ist, wäre es hilfreich, wenn ich –');
+      for (var r = 0; r < refl.length; r++) {
+        lines.push('  -> ' + refl[r]);
+      }
+      lines.push('');
+    }
+
+    if (!hasContent) return null;
+
+    lines.push('');
+    lines.push('=======================================');
+    lines.push('ANALYSE-PROMPT FÜR CLAUDE/CHATGPT:');
+    lines.push('---------------------------------------');
+    lines.push('');
+    lines.push('Bitte analysiere diese Satzergänzungs-Einträge aus Woche ' + (w+1) +
+      ' ("' + wk.theme + '") des 31-Wochen-Selbstwert-Programms von Nathaniel Branden.');
+    lines.push('');
+    lines.push('Ich möchte folgendes von dir:');
+    lines.push('1. MUSTER: Welche Themen oder Überzeugungen tauchen wiederholt auf?');
+    lines.push('2. BLINDE FLECKEN: Was vermeide ich oder was fällt auf, das ich nicht sehe?');
+    lines.push('3. KERNBOTSCHAFT: Was ist die wichtigste Erkenntnis dieser Woche in 1–2 Sätzen?');
+    lines.push('4. NÄCHSTER SCHRITT: Eine konkrete Handlungsempfehlung für die nächste Woche.');
+    lines.push('');
+    lines.push('Sei konkret und beziehe dich auf meine echten Formulierungen. Sei direkt aber mitfühlend.');
+
+  } else {
+    // All weeks
+    lines.push('DIE SECHS SÄULEN DES SELBSTWERTS');
+    lines.push('Nathaniel Branden – Vollständige Satzergänzungs-Einträge');
+    lines.push('Exportiert am: ' + new Date().toLocaleDateString('de-DE'));
+    lines.push('');
+
+    for (var wi = 0; wi < 31; wi++) {
+      var total = getTotalEntries(wi);
+      if (total === 0) continue;
+      var wki = WEEKS[wi];
+      lines.push('');
+      lines.push('WOCHE ' + (wi+1) + ': ' + wki.theme.toUpperCase());
+      lines.push('=======================================');
+      for (var di = 0; di < 5; di++) {
+        var dayHasContent = false;
+        var dayBuf = [];
+        for (var si = 0; si < wki.stems.length; si++) {
+          var ents = getEntries(wi, di, si);
+          if (ents.length > 0) {
+            dayHasContent = true;
+            dayBuf.push('  ' + wki.stems[si]);
+            for (var ei = 0; ei < ents.length; ei++) {
+              dayBuf.push('  -> ' + ents[ei]);
+            }
+          }
+        }
+        if (dayHasContent) {
+          lines.push('Tag ' + (di+1) + ':');
+          lines = lines.concat(dayBuf);
+        }
+      }
+      var ri = getReflection(wi);
+      if (ri.length > 0) {
+        lines.push('Reflexion:');
+        for (var rii = 0; rii < ri.length; rii++) {
+          lines.push('  -> ' + ri[rii]);
+        }
+      }
+    }
+  }
+
+  return lines.join('\n');
+}
+
+function copyToClipboard(text, btnId) {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(function() {
+      var btn = document.getElementById(btnId);
+      if (btn) { btn.textContent = '&#10003; Kopiert!'; setTimeout(function() { btn.textContent = '&#128203; In Zwischenablage kopieren'; }, 2500); }
+    }).catch(function() { fallbackCopy(text, btnId); });
+  } else {
+    fallbackCopy(text, btnId);
+  }
+}
+
+function fallbackCopy(text, btnId) {
+  var ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.position = 'fixed';
+  ta.style.opacity = '0';
+  document.body.appendChild(ta);
+  ta.focus(); ta.select();
+  try {
+    document.execCommand('copy');
+    var btn = document.getElementById(btnId);
+    if (btn) { btn.textContent = '&#10003; Kopiert!'; setTimeout(function() { btn.textContent = '&#128203; In Zwischenablage kopieren'; }, 2500); }
+  } catch(e) { showToast('Kopieren fehlgeschlagen – nutze Download.'); }
+  document.body.removeChild(ta);
+}
+
+function downloadText(text, filename) {
+  var blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function downloadJSON() {
+  var backup = { version: 1, exported: Date.now(), weeks: [] };
+  for (var w = 0; w < 31; w++) {
+    var weekData = { week: w, theme: WEEKS[w].theme, days: [], reflection: getReflection(w) };
+    for (var d = 0; d < 5; d++) {
+      var stems = [];
+      for (var s = 0; s < WEEKS[w].stems.length; s++) {
+        stems.push({ stem: WEEKS[w].stems[s], entries: getEntries(w, d, s) });
+      }
+      weekData.days.push(stems);
+    }
+    backup.weeks.push(weekData);
+  }
+  backup.state = state;
+  downloadText(JSON.stringify(backup, null, 2), 'saeulen-backup-' + new Date().toISOString().slice(0,10) + '.json');
+  showToast('Backup gespeichert!');
+}
+
+function renderExport() {
+  var w = exportWeek;
+  var wk = WEEKS[w];
+  var weekText = buildExportText(w, 'week');
+  var totalEntries = getTotalEntries(w);
+
+  var html = '<div class="fade-in" style="padding-bottom:32px;">';
+
+  // Header
+  html += '<div style="margin:8px 16px 12px;padding:18px;background:var(--card);border:1px solid var(--border);border-radius:18px;">';
+  html += '<div style="font-size:11px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:6px;">Export & Analyse</div>';
+  html += '<div style="font-size:20px;font-weight:800;margin-bottom:4px;">Woche ' + (w+1) + ': ' + esc(wk.theme) + '</div>';
+  html += '<div style="font-size:13px;color:var(--text2);">' + totalEntries + ' Einträge</div>';
+  html += '</div>';
+
+  if (totalEntries === 0) {
+    html += '<div class="empty-state"><div class="empty-icon">&#9998;</div><div class="empty-text">Noch keine Einträge in dieser Woche.<br>Schreibe zuerst im Fokus-Modus.</div></div>';
+    html += '</div>';
+    document.getElementById('export-scroll').innerHTML = html;
+    return;
+  }
+
+  // Step 1 — Copy for AI
+  html += '<div class="section-title">Schritt 1 – Für KI-Analyse exportieren</div>';
+  html += '<div class="card">';
+  html += '<div style="font-size:14px;line-height:1.65;color:var(--text2);margin-bottom:14px;">Kopiere deine Wocheneinträge inkl. fertigem Analyse-Prompt und füge sie in <strong style="color:var(--text);">Claude.ai</strong> oder <strong style="color:var(--text);">ChatGPT</strong> ein.</div>';
+  html += '<button id="copy-week-btn" onclick="copyToClipboard(buildExportText(' + w + ', \'week\'), \'copy-week-btn\')" ';
+  html += 'style="width:100%;background:var(--accent);color:#000;border:none;border-radius:12px;padding:13px;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:10px;">&#128203; In Zwischenablage kopieren</button>';
+  html += '<button onclick="downloadText(buildExportText(' + w + ', \'week\'), \'woche-' + (w+1) + '-' + wk.theme.toLowerCase().replace(/\s/g,'-') + '.txt\')" ';
+  html += 'style="width:100%;background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:13px;font-size:14px;font-weight:600;cursor:pointer;color:var(--text);">&#11015; Als Textdatei herunterladen</button>';
+  html += '</div>';
+
+  // Step 2 — Preview of what gets copied
+  html += '<div class="section-title" style="margin-top:4px;">Vorschau – Analyse-Prompt</div>';
+  html += '<div class="card" style="background:var(--card2);">';
+  html += '<div style="font-size:12px;line-height:1.7;color:var(--text2);font-family:monospace;white-space:pre-wrap;max-height:200px;overflow:hidden;position:relative;">';
+  var promptPreview = 'ANALYSE-PROMPT FÜR CLAUDE/CHATGPT:\n\nBitte analysiere diese Satzergänzungs-Einträge\naus Woche ' + (w+1) + ' ("' + wk.theme + '")...\n\n1. MUSTER: Welche Themen tauchen wiederholt auf?\n2. BLINDE FLECKEN: Was vermeide ich?\n3. KERNBOTSCHAFT: Die wichtigste Erkenntnis.\n4. NÄCHSTER SCHRITT: Eine Handlungsempfehlung.';
+  html += esc(promptPreview);
+  html += '<div style="position:absolute;bottom:0;left:0;right:0;height:60px;background:linear-gradient(transparent,var(--card2));"></div>';
+  html += '</div></div>';
+
+  // Step 3 — Backup
+  html += '<div class="section-title" style="margin-top:4px;">Alle Daten sichern</div>';
+  html += '<div class="card">';
+  html += '<div style="font-size:14px;color:var(--text2);line-height:1.6;margin-bottom:14px;">Exportiere alle 31 Wochen als JSON-Backup. Zum Wiederherstellen einfach die Datei behalten.</div>';
+  html += '<button onclick="downloadJSON()" style="width:100%;background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:13px;font-size:14px;font-weight:600;cursor:pointer;color:var(--text);margin-bottom:8px;">&#128190; Alle Daten als JSON sichern</button>';
+  html += '<button onclick="downloadText(buildExportText(' + w + ', \'all\'), \'alle-eintraege-' + new Date().toISOString().slice(0,10) + '.txt\')" ';
+  html += 'style="width:100%;background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:13px;font-size:14px;font-weight:600;cursor:pointer;color:var(--text);">&#11015; Alle Wochen als Text exportieren</button>';
+  html += '</div>';
+
+  html += '</div>';
+  document.getElementById('export-scroll').innerHTML = html;
+}
+
+
+
+// ==================== SPIEGEL + SICHTBARKEIT ====================
+
+function openMirror() {
+  pushScreen('mirror');
+  renderMirror();
+}
+
+function openVisibility() {
+  pushScreen('visibility');
+  renderVisibility();
+}
+
+// Mirror exercise log
+function getMirrorLog() {
+  try { var v = localStorage.getItem('se_mirror_log'); return v ? JSON.parse(v) : []; } catch(e) { return []; }
+}
+function saveMirrorLog(arr) {
+  try { localStorage.setItem('se_mirror_log', JSON.stringify(arr.slice(-90))); } catch(e) {} // keep last 90 entries
+}
+function getMirrorToday() {
+  try { return localStorage.getItem('se_mirror_today') === new Date().toDateString(); } catch(e) { return false; }
+}
+function setMirrorToday() {
+  try { localStorage.setItem('se_mirror_today', new Date().toDateString()); } catch(e) {}
+}
+
+// Visibility journal
+function getVisibilityEntries() {
+  try { var v = localStorage.getItem('se_visibility'); return v ? JSON.parse(v) : []; } catch(e) { return []; }
+}
+function saveVisibilityEntries(arr) {
+  try { localStorage.setItem('se_visibility', JSON.stringify(arr)); } catch(e) {}
+}
+
+var mirrorPhase = 0; // 0=intro, 1=exercise, 2=done
+var mirrorTimer = null;
+var mirrorSeconds = 0;
+var MIRROR_DURATION = 120; // 2 minutes
+
+function renderMirror() {
+  var log = getMirrorLog();
+  var doneToday = getMirrorToday();
+  var streak = calcMirrorStreak(log);
+
+  var html = '<div class="fade-in" style="padding-bottom:32px;">';
+
+  // Header
+  html += '<div style="margin:8px 16px 12px;padding:20px;background:var(--card);border:1px solid var(--border);border-radius:18px;">';
+  html += '<div style="font-size:11px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:8px;">Nathaniel Branden</div>';
+  html += '<div style="font-size:19px;font-weight:800;margin-bottom:8px;">Die Spiegel&#252;bung</div>';
+  html += '<div style="font-size:14px;line-height:1.65;color:var(--text2);">2 Minuten morgens und abends. Stehe vor einem Spiegel, schaue dir in die Augen und sage &#8211; ohne Eile &#8211; immer wieder: <strong style="color:var(--text);">&#8222;Was auch immer meine Fehler oder Unvollkommenheiten sind &#8211; ich akzeptiere mich vorbehaltlos und vollst&#228;ndig.&#8220;</strong></div>';
+  html += '</div>';
+
+  // Stats row
+  html += '<div class="stats-row">';
+  html += '<div class="stat-card"><div class="stat-num">' + log.length + '</div><div class="stat-label">Sessions</div></div>';
+  html += '<div class="stat-card"><div class="stat-num">' + streak + '</div><div class="stat-label">Tage in Folge</div></div>';
+  html += '<div class="stat-card"><div class="stat-num">' + (doneToday ? '&#10003;' : '&#8212;') + '</div><div class="stat-label">Heute</div></div>';
+  html += '</div>';
+
+  // Timer / Start button
+  html += '<div id="mirror-timer-area">';
+  if (doneToday) {
+    html += '<div class="card" style="text-align:center;padding:28px 20px;">';
+    html += '<div style="font-size:40px;margin-bottom:10px;">&#10003;</div>';
+    html += '<div style="font-size:16px;font-weight:700;margin-bottom:6px;">Heute erledigt</div>';
+    html += '<div style="font-size:14px;color:var(--text2);">Morgen wieder ab 6 Uhr verf&#252;gbar.</div>';
+    html += '<button onclick="startMirrorExercise()" style="margin-top:16px;background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:11px 24px;font-size:13px;font-weight:600;color:var(--text2);cursor:pointer;">Nochmal &#252;ben</button>';
+    html += '</div>';
+  } else {
+    html += '<div class="card" style="text-align:center;padding:28px 20px;">';
+    html += '<div style="font-size:40px;margin-bottom:10px;">&#128444;</div>';
+    html += '<div style="font-size:16px;font-weight:700;margin-bottom:6px;">Bereit?</div>';
+    html += '<div style="font-size:14px;color:var(--text2);line-height:1.6;margin-bottom:20px;">Stehe auf, gehe zum Spiegel. Halte das Handy oder lege es weg &#8211; 2 Minuten gen&#252;gen.</div>';
+    html += '<button onclick="startMirrorExercise()" style="width:100%;background:var(--accent);color:#000;border:none;border-radius:14px;padding:15px;font-size:16px;font-weight:700;cursor:pointer;">&#9654; Jetzt starten (2 Min.)</button>';
+    html += '</div>';
+  }
+  html += '</div>';
+
+  // Brandons volles Protokoll
+  html += '<div class="section-title" style="margin-top:8px;">Das vollst&#228;ndige Protokoll</div>';
+  var steps = [
+    { n: '1', t: 'Stehe auf', d: 'Stelle dich vor einen gro&#223;en Spiegel. Wenn m&#246;glich: nackt. Keine Kleidung, kein Make-up &#8211; du schaust dich selbst an, nicht dein Bild.' },
+    { n: '2', t: 'Schau dir in die Augen', d: 'Nicht in dein Gesicht, nicht deinen K&#246;rper &#8211; zuerst in die Augen. Bleibe dort. Beobachte, was sich zeigt. Unbehagen ist Information, kein Fehler.' },
+    { n: '3', t: 'Atme tief', d: 'Tief einatmen, langsam ausatmen. Lass die Muskeln locker werden. Wiederhole das 3&#8211;4 Mal bevor du sprichst.' },
+    { n: '4', t: 'Sprich den Satz', d: '&#8222;Was auch immer meine Fehler oder Unvollkommenheiten sind &#8211; ich akzeptiere mich vorbehaltlos und vollst&#228;ndig.&#8220; Langsam. Ohne Eile. Lass die Worte landen.' },
+    { n: '5', t: 'Wiederhole 2 Minuten', d: 'Sage den Satz immer wieder. Schau dabei in deine Augen. Wenn Widerstand entsteht &#8211; gut. Das ist der Punkt. Bleibe trotzdem.' },
+    { n: '6', t: 'Beobachte ohne Urteil', d: 'Akzeptieren hei&#223;t nicht m&#246;gen. Es hei&#223;t: Das bin ich, jetzt, so wie ich bin. Das ist Realit&#228;tsrespekt.' }
+  ];
+  html += '<div class="card" style="padding:0;">';
+  for (var si = 0; si < steps.length; si++) {
+    var step = steps[si];
+    html += '<div style="display:flex;align-items:flex-start;gap:12px;padding:14px 16px;border-bottom:' + (si < steps.length-1 ? '1px solid var(--border)' : 'none') + ';">';
+    html += '<div style="width:28px;height:28px;border-radius:50%;background:var(--accent);color:#000;font-size:13px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;">' + step.n + '</div>';
+    html += '<div><div style="font-size:14px;font-weight:700;margin-bottom:3px;">' + step.t + '</div>';
+    html += '<div style="font-size:13px;color:var(--text2);line-height:1.5;">' + step.d + '</div></div>';
+    html += '</div>';
+  }
+  html += '</div>';
+
+  // Brandons Erkl&#228;rung warum es wirkt
+  html += '<div class="section-title" style="margin-top:8px;">Warum es wirkt</div>';
+  html += '<div class="card">';
+  html += '<div style="font-size:14px;line-height:1.7;color:var(--text2);">Wenn Klienten diese &#220;bung 2 Minuten morgens und abends 2 Wochen lang machen, beginnen sie die Verbindung zwischen Selbstakzeptanz und Selbstwert zu sp&#252;ren. <strong style="color:var(--text);">Ein Geist, der sieht, ehrt sich selbst.</strong> Aspekte die wir nicht m&#246;gen, aber akzeptieren &#8211; f&#252;r die wir zust&#228;ndig sind &#8211; motivieren uns st&#228;rker zur Ver&#228;nderung als alles, was wir ablehnen und verdammen.</div>';
+  html += '</div>';
+
+  // Widerstand akzeptieren
+  html += '<div class="section-title" style="margin-top:8px;">Wenn es sich unm&#246;glich anf&#252;hlt</div>';
+  html += '<div class="card" style="background:linear-gradient(135deg,var(--accent2),var(--accent-07));border-color:var(--accent-25);">';
+  html += '<div style="font-size:14px;line-height:1.7;color:var(--text);">Wenn du den Satz nicht akzeptieren kannst &#8211; akzeptiere deinen Widerstand. Sage: <em>&#8222;Ich kann mich gerade nicht akzeptieren, und ich akzeptiere das.&#8220;</em> <strong>Wenn du den Widerstand nicht akzeptieren kannst &#8211; akzeptiere deinen Widerstand zum Widerstand.</strong> Irgendwo gibt es einen Punkt, den du akzeptieren kannst. Beginne dort.</div>';
+  html += '</div>';
+
+  // Log
+  if (log.length > 0) {
+    html += '<div class="section-title" style="margin-top:8px;">Letzte Sessions</div>';
+    html += '<div class="card" style="padding:0;">';
+    var recent = log.slice(-7).reverse();
+    for (var li = 0; li < recent.length; li++) {
+      html += '<div style="display:flex;align-items:center;justify-content:space-between;padding:11px 16px;border-bottom:' + (li < recent.length-1 ? '1px solid var(--border)' : 'none') + ';">';
+      html += '<div style="font-size:14px;">' + esc(recent[li].date) + '</div>';
+      html += '<div style="font-size:13px;color:var(--accent);font-weight:600;">' + recent[li].duration + ' Min. &#10003;</div>';
+      html += '</div>';
+    }
+    html += '</div>';
+  }
+
+  html += '</div>';
+  document.getElementById('mirror-scroll').innerHTML = html;
+}
+
+function startMirrorExercise() {
+  mirrorSeconds = 0;
+  mirrorPhase = 1;
+  var area = document.getElementById('mirror-timer-area');
+  if (!area) return;
+
+  function updateTimer() {
+    mirrorSeconds++;
+    var remaining = MIRROR_DURATION - mirrorSeconds;
+    var mins = Math.floor(remaining / 60);
+    var secs = remaining % 60;
+    var display = (secs < 10 ? '0' : '') + secs;
+    var pct = Math.round((mirrorSeconds / MIRROR_DURATION) * 100);
+
+    var timerEl = document.getElementById('mirror-timer-display');
+    if (timerEl) timerEl.textContent = mins + ':' + display;
+
+    var barEl = document.getElementById('mirror-progress-bar');
+    if (barEl) barEl.style.width = pct + '%';
+
+    if (mirrorSeconds >= MIRROR_DURATION) {
+      clearInterval(mirrorTimer);
+      completeMirror();
+    }
+  }
+
+  area.innerHTML = '<div class="card" style="text-align:center;padding:32px 20px;">' +
+    '<div style="font-size:13px;color:var(--text3);margin-bottom:16px;line-height:1.6;">&#8222;Was auch immer meine Fehler oder Unvollkommenheiten sind &#8211;<br>ich akzeptiere mich vorbehaltlos und vollst&#228;ndig.&#8220;</div>' +
+    '<div id="mirror-timer-display" style="font-size:56px;font-weight:800;font-variant-numeric:tabular-nums;color:var(--accent);margin:8px 0;">2:00</div>' +
+    '<div style="font-size:13px;color:var(--text3);margin-bottom:16px;">Schau dir in die Augen. Atme tief.</div>' +
+    '<div class="progress-bar" style="margin:0 0 20px;"><div id="mirror-progress-bar" class="progress-fill" style="width:0%;transition:width 1s linear;"></div></div>' +
+    '<button onclick="stopMirror()" style="background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:11px 24px;font-size:13px;font-weight:600;color:var(--text2);cursor:pointer;">Abbrechen</button>' +
+    '</div>';
+
+  mirrorTimer = setInterval(updateTimer, 1000);
+}
+
+function stopMirror() {
+  if (mirrorTimer) clearInterval(mirrorTimer);
+  renderMirror();
+}
+
+function completeMirror() {
+  setMirrorToday();
+  var log = getMirrorLog();
+  var now = new Date();
+  log.push({
+    date: now.toLocaleDateString('de-DE', {weekday:'short', day:'numeric', month:'short'}),
+    duration: '2',
+    ts: now.getTime()
+  });
+  saveMirrorLog(log);
+  showToast('Spiegel\u00fcbung abgeschlossen \u2013 gut gemacht!');
+  renderMirror();
+}
+
+function calcMirrorStreak(log) {
+  if (log.length === 0) return 0;
+  var today = new Date(); today.setHours(0,0,0,0);
+  var streak = 0;
+  var checkDate = new Date(today);
+  for (var i = log.length - 1; i >= 0; i--) {
+    var d = new Date(log[i].ts); d.setHours(0,0,0,0);
+    if (d.getTime() === checkDate.getTime()) {
+      streak++;
+      checkDate.setDate(checkDate.getDate() - 1);
+    } else if (d.getTime() < checkDate.getTime()) {
+      break;
+    }
+  }
+  return streak;
+}
+
+// ==================== SICHTBARKEIT ====================
+
+function renderVisibility() {
+  var entries = getVisibilityEntries();
+  var html = '<div class="fade-in" style="padding-bottom:32px;">';
+
+  // Header
+  html += '<div style="margin:8px 16px 12px;padding:20px;background:var(--card);border:1px solid var(--border);border-radius:18px;">';
+  html += '<div style="font-size:11px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:8px;">Nathaniel Branden</div>';
+  html += '<div style="font-size:19px;font-weight:800;margin-bottom:8px;">Psychologische Sichtbarkeit</div>';
+  html += '<div style="font-size:14px;line-height:1.65;color:var(--text2);">Das Bed&#252;rfnis, wirklich gesehen zu werden &#8211; nicht bewertet, nicht best&#228;tigt, sondern <em>verstanden</em>. Branden nennt es eines der tiefsten menschlichen Bed&#252;rfnisse.</div>';
+  html += '</div>';
+
+  // Kernkonzept
+  html += '<div class="section-title">Was ist Sichtbarkeit?</div>';
+  html += '<div class="card">';
+  html += '<div style="font-size:14px;line-height:1.7;color:var(--text2);">Wenn ich etwas sage oder tue und du antwortest auf eine Weise, die mit meiner eigenen Wahrnehmung kongruent ist &#8211; wenn ich spielerisch bin und du mitspielst, wenn ich Freude ausdr&#252;cke und du Verst&#228;ndnis zeigst &#8211; dann <strong style="color:var(--text);">f&#252;hle ich mich sichtbar</strong>. Ich f&#252;hle, dass wir in derselben Realit&#228;t sind.<br><br>Wenn deine Reaktion keinen Sinn ergibt &#8211; wenn ich Freude ausdr&#252;cke und du reagierst mit Ungeduld &#8211; f&#252;hle ich mich <strong style="color:var(--text);">unsichtbar</strong>. Als w&#228;ren wir in verschiedenen Welten.</div>';
+  html += '</div>';
+
+  // Das Spiegel-Prinzip
+  html += '<div class="section-title" style="margin-top:8px;">Das Spiegel-Prinzip</div>';
+  html += '<div class="card" style="background:linear-gradient(135deg,var(--accent2),var(--accent-07));border-color:var(--accent-25);">';
+  html += '<div style="font-size:14px;line-height:1.7;color:var(--text);">Ich kann mich selbst nicht &#8222;objektiv&#8220; wahrnehmen &#8211; nur von innen, aus einer einzigartigen privaten Perspektive. Aber wenn deine Reaktionen Sinn ergeben in Bezug auf meine inneren Wahrnehmungen, <strong>wirst du zu einem Spiegel, der mir Objektivit&#228;t &#252;ber meine Person erm&#246;glicht.</strong> Ich sehe mich in deinen angemessenen Reaktionen reflektiert.</div>';
+  html += '</div>';
+
+  // Selbst-Sichtbarkeit Sektion
+  html += '<div class="section-title" style="margin-top:8px;">Selbst-Sichtbarkeit &#252;ben</div>';
+  html += '<div class="card">';
+  html += '<div style="font-size:14px;color:var(--text2);line-height:1.6;margin-bottom:14px;">Das tiefste Problem der Unsichtbarkeit: Wir sind uns selbst unsichtbar. Wir sehen nicht, was wir wirklich f&#252;hlen, wollen, denken. Die Selbst-Sichtbarkeits&#252;bungen bauen darauf auf.</div>';
+
+  var selfExercises = [
+    { t: 'Was ich wirklich denke', q: 'In welcher Situation habe ich heute oder diese Woche verschwiegen, was ich wirklich denke? Was h&#228;tte ich gesagt, wenn Zustimmung keine Rolle gespielt h&#228;tte?' },
+    { t: 'Was ich wirklich f&#252;hle', q: 'Welches Gef&#252;hl habe ich gerade, das ich normalerweise nicht zeige oder nicht einmal mir selbst eingestehe?' },
+    { t: 'Was ich wirklich will', q: 'Was w&#252;rde ich heute tun, wenn ich wirklich nach meinen tiefsten W&#252;nschen handeln w&#252;rde &#8211; ohne R&#252;cksicht auf Erwartungen anderer?' },
+    { t: 'Wo ich mich verbiege', q: 'In welcher Beziehung oder Situation passe ich mich an und agiere nicht als der, der ich wirklich bin? Was kostet mich das?' }
+  ];
+
+  for (var ei = 0; ei < selfExercises.length; ei++) {
+    var ex = selfExercises[ei];
+    html += '<div style="padding:12px 0;border-bottom:' + (ei < selfExercises.length-1 ? '1px solid var(--border)' : 'none') + ';">';
+    html += '<div style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:4px;">' + ex.t + '</div>';
+    html += '<div style="font-size:13px;color:var(--text2);line-height:1.5;">' + ex.q + '</div>';
+    html += '</div>';
+  }
+  html += '</div>';
+
+  // Journal
+  html += '<div class="section-title" style="margin-top:8px;">Sichtbarkeits-Journal</div>';
+  html += '<div class="card">';
+  html += '<div style="font-size:13px;color:var(--text3);margin-bottom:12px;">Wann habe ich mich heute wirklich gesehen gef&#252;hlt &#8211; oder unsichtbar?</div>';
+  html += '<div id="visibility-entries-list">';
+
+  if (entries.length === 0) {
+    html += '<div style="text-align:center;padding:20px;color:var(--text3);font-size:14px;">Noch keine Eintr&#228;ge. Schreibe deinen ersten unten.</div>';
+  } else {
+    for (var vi = entries.length-1; vi >= 0; vi--) {
+      html += '<div style="display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:' + (vi > 0 ? '1px solid var(--border)' : 'none') + ';">';
+      html += '<div style="flex:1;">';
+      html += '<div style="font-size:11px;color:var(--accent);font-weight:600;margin-bottom:3px;">' + esc(entries[vi].date) + '</div>';
+      html += '<div style="font-size:14px;line-height:1.5;">' + esc(entries[vi].text) + '</div>';
+      html += '</div>';
+      html += '<button onclick="delVisibilityEntry(' + vi + ')" style="background:none;border:none;color:var(--text3);font-size:18px;cursor:pointer;padding:0 4px;flex-shrink:0;">&#10005;</button>';
+      html += '</div>';
+    }
+  }
+  html += '</div></div>';
+
+  // Satzerg&#228;nzungen
+  html += '<div class="section-title" style="margin-top:8px;">Satzerg&#228;nzungen zum Vertiefen</div>';
+  html += '<div class="card" style="padding:0;">';
+  var stems = [
+    'Wenn ich mich wirklich gesehen gef&#252;hlt h&#228;tte als Kind \u2013',
+    'Wenn ich heute mehr ich selbst w&#228;re \u2013',
+    'Menschen werden mir gel\u00e4ufiger, wenn ich \u2013',
+    'Wenn ich meine wahren Gedanken h&#228;ufiger aus\u00fcbte \u2013',
+    'Das Gef&#252;hl, unsichtbar zu sein, entsteht f&#252;r mich wenn \u2013'
+  ];
+  for (var sti = 0; sti < stems.length; sti++) {
+    html += '<div style="display:flex;align-items:center;justify-content:space-between;padding:13px 16px;border-bottom:' + (sti < stems.length-1 ? '1px solid var(--border)' : 'none') + ';cursor:pointer;" onclick="openFocusStem(\'' + stems[sti].replace(/'/g, "\\'") + '\')">';
+    html += '<div style="font-size:14px;flex:1;line-height:1.4;">' + stems[sti] + '</div>';
+    html += '<div style="color:var(--text3);font-size:14px;flex-shrink:0;margin-left:8px;">&#8250;</div>';
+    html += '</div>';
+  }
+  html += '</div>';
+
+  html += '</div>';
+  document.getElementById('visibility-scroll').innerHTML = html;
+
+  // Set up journal input
+  var inputArea = document.createElement('div');
+  inputArea.className = 'input-bar';
+  inputArea.innerHTML = '<textarea class="stem-input" id="visibility-input" placeholder="Wann f\u00fchlte ich mich heute gesehen oder unsichtbar\u2026" rows="1" style="font-family:var(--font);"></textarea>' +
+    '<button class="send-btn" onclick="addVisibilityEntry()">&#9650;</button>';
+  document.getElementById('visibility-scroll').appendChild(inputArea);
+
+  var ta = document.getElementById('visibility-input');
+  if (ta) {
+    ta.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); addVisibilityEntry(); }
+    });
+    ta.addEventListener('input', function() {
+      this.style.height = '42px';
+      this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+    });
+  }
+}
+
+function addVisibilityEntry() {
+  var ta = document.getElementById('visibility-input');
+  if (!ta) return;
+  var val = ta.value.trim();
+  if (!val) return;
+  var entries = getVisibilityEntries();
+  var now = new Date();
+  entries.push({
+    text: val,
+    date: now.toLocaleDateString('de-DE', {weekday:'short', day:'numeric', month:'short'})
+  });
+  saveVisibilityEntries(entries);
+  ta.value = ''; ta.style.height = '42px';
+  renderVisibility();
+}
+
+function delVisibilityEntry(idx) {
+  var entries = getVisibilityEntries();
+  entries.splice(idx, 1);
+  saveVisibilityEntries(entries);
+  renderVisibility();
+}
+
+function openFocusStem(stem) {
+  // Open a free-write mode with a custom stem
+  state.customStem = stem;
+  pushScreen('focus');
+  renderFocusWithCustomStem(stem);
+}
+
+function renderFocusWithCustomStem(stem) {
+  document.getElementById('focus-header-right').textContent = 'Sichtbarkeit';
+  var stemHtml = '<div class="stem-card active-stem">';
+  stemHtml += '<div class="stem-title">Satzanfang</div>';
+  stemHtml += '<div class="stem-text">' + esc(stem) + '</div>';
+  stemHtml += '<div class="stem-count">Freies Schreiben</div>';
+  stemHtml += '</div>';
+  document.getElementById('focus-stem-info').innerHTML = stemHtml;
+  document.getElementById('focus-day-tabs').innerHTML = '';
+  document.getElementById('focus-stem-tabs').innerHTML = '';
+
+  var key = 'se_custom_' + btoa(unescape(encodeURIComponent(stem))).substring(0, 20);
+  var entries = [];
+  try { var v = localStorage.getItem(key); entries = v ? JSON.parse(v) : []; } catch(e) {}
+
+  var html = '';
+  if (entries.length === 0) {
+    html = '<div class="empty-state"><div class="empty-icon">&#9998;</div><div class="empty-text">Vervollst\u00e4ndige den Satz mindestens 6 Mal.<br>Schreib spontan \u2013 ohne nachzudenken.</div></div>';
+  } else {
+    html = '<div style="padding:0 16px;">';
+    for (var i = entries.length-1; i >= 0; i--) {
+      html += '<div class="entry-item">';
+      html += '<div style="color:var(--text3);font-size:12px;padding-top:3px;min-width:20px;">' + (i+1) + '</div>';
+      html += '<div class="entry-text">' + esc(entries[i]) + '</div>';
+      html += '<button class="entry-del" onclick="delCustomEntry(' + i + ',\'' + key + '\')">&#10005;</button>';
+      html += '</div>';
+    }
+    html += '</div>';
+  }
+  document.getElementById('focus-entries').innerHTML = html;
+
+  var sendBtn = document.getElementById('focus-send');
+  if (sendBtn) {
+    sendBtn.onclick = function() {
+      var input = document.getElementById('focus-input');
+      var val = input.value.trim();
+      if (!val) return;
+      try { var v = localStorage.getItem(key); var arr = v ? JSON.parse(v) : []; arr.push(val); localStorage.setItem(key, JSON.stringify(arr)); } catch(e) {}
+      input.value = ''; input.style.height = '42px';
+      renderFocusWithCustomStem(stem);
+    };
+  }
+}
+
+function delCustomEntry(idx, key) {
+  try {
+    var v = localStorage.getItem(key); var arr = v ? JSON.parse(v) : [];
+    arr.splice(idx, 1); localStorage.setItem(key, JSON.stringify(arr));
+  } catch(e) {}
+  renderFocusWithCustomStem(state.customStem || '');
+}
+
+// ==================== INIT ====================
+loadData();
+applyTheme();
+applyAccent();
+renderHome();
+renderGuide();
+renderBuch();
+</script>
+</body>
+</html>
